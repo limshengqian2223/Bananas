@@ -1,5 +1,5 @@
 shengqian lite
 Team members:
 1. 
-2. 
+2. Xiang Yi
 3. 
