@@ -10,10 +10,10 @@ class Collection:
     
     methods:
     +insert() #child
-    +find() #same (?)
-    # +findall()
-    # +delete() #same (?)
+    +find()
+    +findall()
     +update() #child
+    # +delete() optional for now
     """
     def __init__(self, dbname):
         self._dbname = dbname
@@ -51,19 +51,42 @@ class Collection:
         """
         pass
 
-def _execute_dql(query, **kwargs):
-    """retrieve records etc"""
-    pass
+    def _execute_dql(self, query):
+        """retrieve records etc"""
+        with sqlite3.connect(self._dbname) as conn:
+            c = conn.cursor() 
+    
+            c.execute(query)
+            result = c.fetchall()
+    
+        #conn.close()
         
-def _execute_dml(query, params):
-    """insert, delete, update etc"""
-    pass
+        return result
+            
+    def _execute_dml(self, query, params):
+        """insert, delete, update etc"""
+        with sqlite3.connect(self._dbname) as conn:
+            c = conn.cursor()
 
+            c.execute(query, params)
+            result = c.fetchall()
+
+            conn.commit()
+        #conn.close()
+
+        return result            
+    
 class StudentCollection(Collection):
-    pass
+    """
+    
+    """
 
 class CCACollection(Collection):
-    pass
+    """
+    
+    """
 
 class ActivityCollection(Collection):
-    pass
+    """
+    
+    """
