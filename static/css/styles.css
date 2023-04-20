@@ -1,0 +1,14 @@
+.main-heading{
+    border: 0.5px solid white;
+    margin: auto;
+    width: 500px;
+    padding: 5px;
+}
+
+.container{
+    display:table ;
+    border:0.5px solid black;
+    margin: auto;
+    padding:10px
+}
+

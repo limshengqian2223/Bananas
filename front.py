@@ -10,15 +10,15 @@ def index():
     Landing Page - Not much
     -Documentation for first time users
     """
-    pass
+    return render_template('index.html')
 
-@app.route('/new_student', methods=['POST'])
+@app.route('/new_student', methods=['GET','POST'])
 def new_student():
     """ 
     Require: None
     Pass to DB: name, age. year enroll, grad year, student_subject (seperate table) (Inserting by DB)
     """
-    pass
+    return render_template('new_student.html')
 
 @app.route('/new_student_cca', methods=['POST'])
 def new_student_cca():
