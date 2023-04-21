@@ -1,0 +1,172 @@
+<!DOCTYPE HTML>
+
+<html>
+
+    <head>
+        <title>{{title}}</title>
+        <link rel="stylesheet" href="{{url_for('static', filename='css/styles.css')}}">
+    </head>
+
+    {% include 'header.html' %}
+    
+    <body>
+        
+    {% if page_type=='new_student' %}
+        <div class='container'>
+        <span class=''><p>Register a New Student</p></span>
+        </br>
+        <p>Use the following form to add a new student</p>
+        <form 
+            action= "{{form_meta['action']}}"
+            method="{{form_meta['method']}}">
+
+            <table>
+                {%for name, value in form_data.items()%}
+                <tr>
+                    <td>
+                        <label for="{{name}}">
+                            {{ name.replace("_"," ").title()}}:</label>
+                    </td>
+
+                    <td>
+                        <input id="{{name}}"
+                            type="text"
+                            name="{{name}}"
+                            value=""/>
+                    </td>
+                </tr>
+                {% endfor %}
+
+                <td>
+                    <td>
+                        <input type="submit" value="submit"/>
+                    </td>
+                </td>
+            </table>
+        </form>
+        
+        </div>     
+    {% endif %}
+
+    {% if page_type=='confirmed_student' %}
+    <div class='container'>
+        <p>The following student is successfully registered</p>
+
+        {% for name, value in student_info.items() %}
+        {{ name.replace('_', " ").title()}}:{{value}}
+    </br>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if page_type=='new_student_cca' %}
+        <div class='container'>
+        <span class=''><p>Register a New Student CCA</p></span>
+        </br>
+        <p>Use the following form to register for a new CCA</p>
+        <form 
+            action= "{{form_meta['action']}}"
+            method="{{form_meta['method']}}">
+
+            <table>
+                {%for name, value in form_data.items()%}
+                <tr>
+                    <td>
+                        <label for="{{name}}">
+                            {{ name.replace("_"," ").title()}}:</label>
+                    </td>
+
+                    <td>
+                        <input id="{{name}}"
+                            type="text"
+                            name="{{name}}"
+                            value=""/>
+                    </td>
+                </tr>
+                {% endfor %}
+                <tr>
+                <td>
+                    <label for="student_role">Student Role:</label>
+                </td>
+
+                <td>
+                    <select name="student_role" id="student_role">
+                      <option value="Member">Member</option>
+                      <option value="Exco">Exco</option>
+                      <!-- <option value="mercedes">Mercedes</option>
+                      <option value="audi">Audi</option> -->
+                    </select>
+                </td>
+                </tr>
+                <td>
+                    <td>
+                        <input type="submit" value="Submit"/>
+                    </td>
+                </td>
+            </table>
+        </form>
+        
+        </div>   
+    {% endif %}
+
+    {% if page_type=="confirmed_student_cca" %}
+    <div class='container'>
+        <p>The following student is successfully registered for a CCA</p>
+
+        {% for name, value in student_info.items() %}
+        {{ name.replace('_', " ").title()}}:{{value}}
+    </br>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if page_type == 'new_student_activity' %}
+    <div class='container'>
+    <span class=''><p>Register a New Student Activity</p></span>
+    </br>
+    <p>Use the following form to register for a new Activity</p>
+    <form 
+        action= "{{form_meta['action']}}"
+        method="{{form_meta['method']}}">
+
+        <table>
+            {%for name, value in form_data.items()%}
+            <tr>
+                <td>
+                    <label for="{{name}}">
+                        {{ name.replace("_"," ").title()}}:</label>
+                </td>
+
+                <td>
+                    <input id="{{name}}"
+                        type="text"
+                        name="{{name}}"
+                        value=""/>
+                </td>
+            </tr>
+            {% endfor %}
+
+            <td>
+                <td>
+                    <input type="submit" value="submit"/>
+                </td>
+            </td>
+        </table>
+    </form>
+    
+    </div>    
+    {% endif %}
+
+    {% if page_type=="confirmed_student_activity" %}
+    <div class='container'>
+        <p>The following student has successfully registered for a Activity</p>
+
+        {% for name, value in student_info.items() %}
+        {{ name.replace('_', " ").title()}}:{{value}}
+    </br>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    </body>
+</html>
