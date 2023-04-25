@@ -674,4 +674,5 @@ class StudentActivityTable:
                 return result
 
             else:
+                print('None')
                 return None
