@@ -1,0 +1,110 @@
+<!DOCTYPE HTML>
+
+<html>
+
+    <head>
+        <title>{{title}}</title>
+        <link rel="stylesheet" href="{{url_for('static', filename='css/styles.css')}}">
+    </head>
+
+    {% include 'header.html' %}
+    
+    <body>
+        {% if page_type=="edit_student_empty" %}
+            <div class="container">
+                <span class="highlight-blue">Edit a Student Record</span>
+                <br/><br/>
+                <span class="instructions">Use the following form to edit a Student Record</span>
+
+                <br/><br/>
+                <form 
+                    action="{{ form_meta['action'] }} "
+                    method = "{{ form_meta['methods'] }}"/>
+                    
+                    <label for="Name">Student Name</label>
+                    <input id="Name" type="text" name="name"/>
+                    <input type="submit" value="submit"/>
+                </form>
+            </div>
+        {% endif %}
+
+        {% if page_type=="edit_student_detail" %}
+            <div class="container">
+                <span class="highlight-blue">Update a Student Record</span>
+                <br/><br/>
+                <span class="instructions">Use the following form to update a Student Record</span>
+                <br/><br/>
+
+                <form 
+                    action="{{ form_meta['action'] }}"
+                    method="{{ form_meta['method'] }}">
+
+                    <table>
+                        {% for name, value in form_data.items() %}
+                        <tr>
+                            <td> 
+                            <label for= "{{name}}">
+                                {{ name.replace("_", " ").title() }}:
+                            </label>
+
+                            <input
+                                id="{{name}}"
+                                type="text"
+                                name="{{name}}"/>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                        <tr>
+                            <td>
+                                <label for="prev_name"></label>
+                                <input id="prev_name" type="hidden" name="prev_name" value="{{prev_name}}"/>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td colspan="2" align = "right">
+                                <input type="submit" value="Submit">
+                            </td>
+                        </tr>
+                    </table>
+                </form>
+                    
+            </div>
+        
+        {% endif %}
+
+        {% if page_type=="edit_membership_empty" %}
+            <div class="container">
+                <span class="highlight-blue">Edit a Student Record</span>
+                <br/><br/>
+                <span class="instructions">Use the following form to edit a Student Record</span>
+
+                <br/><br/>
+                <form 
+                    action="{{ form_meta['action'] }} "
+                    method = "{{ form_meta['methods'] }}"/>
+                    
+                    <label for="Name">Student Name</label>
+                    <input id="Name" type="text" name="name"/>
+                    <input type="submit" value="submit"/>
+                </form>
+            </div>
+        {% endif %}
+        
+        {% if page_type=="edit_participation_empty" %}
+            <div class="container">
+                <span class="highlight-blue">Edit a Student Record</span>
+                <br/><br/>
+                <span class="instructions">Use the following form to edit a Student Record</span>
+
+                <br/><br/>
+                <form 
+                    action="{{ form_meta['action'] }} "
+                    method = "{{ form_meta['methods'] }}"/>
+                    
+                    <label for="Name">Student Name</label>
+                    <input id="Name" type="text" name="name"/>
+                    <input type="submit" value="submit"/>
+                </form>
+            </div>
+        {% endif %}
+    </body>
