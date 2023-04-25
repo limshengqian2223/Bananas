@@ -174,7 +174,12 @@ def view_student_cca():
 
     user pass in: student name
     """
-    pass
+    return render_template('view_info.html',
+                          title='View Student CCA',
+                            page_type='view_cca',
+                          form_meta={'action':'/view_student_cca',
+                                    'method':'post'},
+                          form_data={'student_name':''})
 
 @app.route('/view_student_activity', methods=['GET','POST'])
 def view_student_activity():
@@ -183,7 +188,12 @@ def view_student_activity():
 
     pass in : name
     """
-    pass
+    return render_template('view_info.html',
+                          title='View Student Activity',
+                            page_type='view_activity',
+                          form_meta={'action':'/view_student_activity',
+                                    'method':'post'},
+                          form_data={'student_name':''})
     
 @app.route('/edit_student', methods=['GET','POST'])
 def edit_student():
@@ -192,7 +202,11 @@ def edit_student():
 
     Pass to DB :edited student Record (Update by DB)
     """
-    pass
+    return render_template('edit_info.html',
+                          page_type='edit_student_empty',
+                          form_meta={'action':'/edit_student',
+                                    'method':'post'},
+                           form_data={'name':''})
 
 @app.route('/edit_membership', methods=['GET','POST'])
 def edit_membership():
@@ -201,7 +215,11 @@ def edit_membership():
     
     pass in: edited student CCA record (Update by DB)
     """
-    pass
+    return render_template('edit_info.html',
+                          page_type='edit_membership_empty',
+                          form_meta={'action':'/edit_membership',
+                                    'method':'post'},
+                           form_data={'name':''})
 
 @app.route('/edit_participation', methods=['GET','POST'])
 def edit_participation():
@@ -210,4 +228,8 @@ def edit_participation():
     
     Require: Student activity record (Update by DB)
     """
-    pass
+    return render_template('edit_info.html',
+                          page_type='edit_participation_empty',
+                          form_meta={'action':'/edit_participation',
+                                    'method':'post'},
+                           form_data={'name':''})

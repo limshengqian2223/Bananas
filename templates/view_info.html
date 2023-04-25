@@ -1,0 +1,53 @@
+<!DOCTYPE HTML>
+
+<html>
+
+    <head>
+        <title>{{title}}</title>
+        <link rel="stylesheet" href="{{url_for('static', filename='css/styles.css')}}">
+    </head>
+
+    {% include 'header.html' %}
+
+    <body>
+        {% if page_type=='view_cca' %}
+        <div class="container">
+            <p>Enter Name of student to search for related CCA(s)</p>
+            <form 
+                action="{{form_meta['action']}}",
+                method="{{form_meta['method']}}">
+
+                {% for name, value in form_data.items() %}
+
+                <label for="{{name}}">
+                    {{name.replace('_',' ').title()}}:</label>
+                <input id="{{name}}"
+                    type="text"
+                    name="{{name}}"
+                    value="{{value}}"/>
+                {% endfor %}
+                <input type="submit" value="Submit"/>
+        </div>
+        {% endif %}
+
+        {% if page_type=='view_activity' %}
+        <div class="container">
+            <p>Enter Name of student to search for related Activity/Activities</p>
+            <form 
+                action="{{form_meta['action']}}",
+                method="{{form_meta['method']}}">
+
+                {% for name, value in form_data.items() %}
+
+                <label for="{{name}}">
+                    {{name.replace('_',' ').title()}}:</label>
+                <input id="{{name}}"
+                    type="text"
+                    name="{{name}}"
+                    value="{{value}}"/>
+                {% endfor %}
+                <input type="submit" value="Submit"/>
+        </div>
+        {% endif %}
+    </body>
+</html>
