@@ -1,5 +1,10 @@
-#place to test cod
-import storage 
+from flask import Flask
+from front import app
+
+import storage
+
+if __name__ == '__main__':
+    app.run('0.0.0.0')
 
 sc = storage.StudentCollection('capstone.db', 'student')
 
