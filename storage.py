@@ -125,13 +125,10 @@ class StudentCollection:
 
             c.execute(find, (name, ))
 
-            result = c.fetchall()
+            result = c.fetchone()
 
         if result:
-            for i in range(len(result)):
-                result[i] = dict(result[i])
-
-            return result
+            return dict(result)
 
         else:
             return None
@@ -144,12 +141,13 @@ class StudentCollection:
 
     def insert(self, record: dict) -> None:
         """
-        Takes in dictionary containing student's name, age, year_enrolled, grad_year,
+        Takes in dictionary containing student's name, age, class, year_enrolled, grad_year
 
         record = {"student_name": str,
                    "student_age": str,
-                   "year_enrolled": str,
-                   "grad_year": str}
+                   "student_class": int
+                   "student_year_enrolled": str,
+                   "student_grad_year": str}
 
         Inserts student data into table
 
@@ -169,10 +167,11 @@ class StudentCollection:
                 INSERT INTO "student" (
                 "name",
                 "age",
+                "class",
                 "year_enrolled",
                 "grad_year"
                 ) VALUES (
-                :student_name, :student_age, :year_enrolled, :grad_year)
+                :student_name, :student_age, :student_class, :student_year_enrolled, :student_grad_year)
                 '''
 
         with sqlite3.connect(self._dbname) as conn:
@@ -277,13 +276,10 @@ class CCACollection:
 
             c.execute(find, (name, ))
 
-            result = c.fetchall()
+            result = c.fetchone()
 
         if result:
-            for i in range(len(result)):
-                result[i] = dict(result[i])
-
-            return result
+            return dict(result)
 
         else:
             return None
@@ -500,15 +496,21 @@ class StudentCCATable:
     """
     methods:
     +find(student_name)
-    +
+    +insert(record)
+    +update(record)
     """
 
+    
     def __init__(self, dbname):
         self._dbname = dbname
+        self._sc = StudentCollection(self._dbname, "student")
+        self._ccac = CCACollection(self._dbname, "CCA")
 
+        
     def __repr__(self):
         return f"StudentCCATable(DB: {self._dbname})"
 
+    
     def find(self, student_name):
         """
         Takes in student name
@@ -517,40 +519,22 @@ class StudentCCATable:
         
         returns None if record not found
         """
-
-        #idt we need all these fields?
-        #         join_and_find = '''
-        #                         SELECT
-        #                         "student"."name" AS "student name",
-        #                         "student"."age" AS "student age",
-        #                         "student"."year_enrolled" AS "year enrolled",
-        #                         "student"."grad_year" AS "graduating year",
-        #                         "cca"."name" AS "cca name",
-        #                         "cca"."type" AS "cca type",
-        #                         "student_cca"."role" AS "role"
-
-        #                         FROM "student"
-        #                         INNER JOIN "student_cca"
-        #                         ON "student_cca"."student_id" = "student"."id"
-        #                         INNER JOIN "cca"
-        #                         ON "student_cca"."cca_id" = "cca"."id"
-
-        #                         WHERE "student"."name" = ?
-        #                         '''
-
+        
         join_and_find = '''
                         SELECT 
                         "student"."name" AS "student name",
+                        "student"."class" AS "student class",
                         "cca"."name" AS "cca name",
                         "student_cca"."role" as "role"
                         FROM "student"
                         INNER JOIN "student_cca"
-                        ON "student"."id" = "student_cca"."cca_id"
+                        ON "student"."id" = "student_cca"."student_id"
                         INNER JOIN "cca"
                         ON "student_cca"."cca_id" = "cca"."id"
                         
                         WHERE "student"."name" = ?
                         '''
+
         with sqlite3.connect(self._dbname) as conn:
             conn.row_factory = sqlite3.Row
             c = conn.cursor()
@@ -568,12 +552,61 @@ class StudentCCATable:
             else:
                 return None
 
+    def insert(self, record):
+        """
+        checks if student exists
+        inserts new student cca record
+
+        record = {"student_name": str,
+                  "student_cca": str,
+                  "student_role": str
+                 }
+
+        get the student & cca id & insert into junction table
+
+        (to be inserted) record = {"student_id": str,
+                                    "cca_id": str
+                                    "student_role": str
+                                    }
+        """        
+        student_id = self._sc.find(record['student_name'])["id"]
+        cca_id = self._ccac.find(record['student_cca'])["id"]
+        
+        #If student or CCA doesnt exist raise NameNotFoundError
+        if (student_id is None) or (cca_id is None):
+            raise NameNotFoundError
+            
+        existing_rec = self.find(record['student_name'])
+        
+        for rec in existing_rec:
+            if (rec['student name'] == record['student_name']) and (rec['cca name'] == record['student_cca']):
+                raise RecordAlreadyExists
+
+        record['student_id'] = student_id
+        record['cca_id'] = cca_id
+
+        insert = '''
+                INSERT INTO "student_cca" (
+                "student_id",
+                "cca_id",
+                "role"
+                ) VALUES (
+                :student_id, :cca_id, :student_role
+                )
+                '''
+
+        with sqlite3.connect(self._dbname) as conn:
+            c = conn.cursor()
+
+            c.execute(insert, record)
+
+            conn.commit()
 
 class StudentSubjectTable:
     """
     methods:
     +find(student_name)
-    + ?
+    +insert(record)
     """
 
     def __init__(self, dbname):
@@ -593,6 +626,7 @@ class StudentSubjectTable:
         join_and_find = '''
                         SELECT
                         "student"."name" AS "student name",
+                        "student"."class" AS "student class"
                         "subject"."name" AS "subject name"
                         FROM "student"
 
@@ -621,12 +655,20 @@ class StudentSubjectTable:
             else:
                 return None
 
+    def insert(self, record):
+        """
+        checks if student exists
+        inserts new student cca record
 
+        record = {}
+        """
+        pass
+        
 class StudentActivityTable:
     """
     methods:
     +find(student_name)
-    + ?
+    +insert(record)
     """
 
     def __init__(self, dbname):
@@ -646,6 +688,7 @@ class StudentActivityTable:
         join_and_find = '''
                         SELECT
                         "student"."name" AS "student name",
+                        "student"."class" AS "student class"
                         "activity"."name" AS "activity name",
                         "student_activity"."role" AS "role",
                         "student_activity"."award" AS "award",
@@ -674,5 +717,4 @@ class StudentActivityTable:
                 return result
 
             else:
-                print('None')
                 return None
