@@ -59,6 +59,18 @@
     </div>
     {% endif %}
 
+    {% if page_type=='insert_student_fail' %}
+    <div class='container'>
+        <p>The following student already exists!</p>
+
+        {% for name, value in student_info.items() %}
+        {{ name.replace('_', " ").title()}}:{{value}}
+    </br>
+        {% endfor %}
+        <button type='button' onclick="history.go(-1)"> Edit </button>
+    </div>
+    {% endif %}
+
     {% if page_type=='new_student_cca' %}
         <div class='container'>
         <span class=''><p>Register a New Student CCA</p></span>
@@ -120,6 +132,18 @@
     </div>
     {% endif %}
 
+    {% if page_type=='insert_student_cca_fail' %}
+    <div class='container'>
+        <p>The following student already exists!</p>
+
+        {% for name, value in student_info.items() %}
+        {{ name.replace('_', " ").title()}}:{{value}}
+    </br>
+        {% endfor %}
+        <button type='button' onclick="history.go(-1)"> Edit </button>
+    </div>
+    {% endif %}
+
     {% if page_type == 'new_student_activity' %}
     <div class='container'>
     <span class=''><p>Register a New Student Activity</p></span>
@@ -168,5 +192,17 @@
     </div>
     {% endif %}
 
+    {% if page_type=="insert_activity_fail" %}
+    <div class='container'>
+        <p>The following student has already registered for this Activity!</p>
+
+        {% for name, value in student_info.items() %}
+        {{ name.replace('_', " ").title()}}:{{value}}
+    </br>
+        {% endfor %}
+        <button type='button' onclick="history.go(-1)"> Edit </button>
+    </div>
+    {% endif %}
+        
     </body>
 </html>

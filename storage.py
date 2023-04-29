@@ -504,7 +504,7 @@ class StudentCCATable:
     def __init__(self, dbname):
         self._dbname = dbname
         self._sc = StudentCollection(self._dbname, "student")
-        self._ccac = CCACollection(self._dbname, "CCA")
+        self._ccac = CCACollection(self._dbname, "cca")
 
         
     def __repr__(self):

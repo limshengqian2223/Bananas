@@ -15,11 +15,12 @@
                 <span class="highlight-blue">Edit a Student Record</span>
                 <br/><br/>
                 <span class="instructions">Use the following form to edit a Student Record</span>
+                <br/>{{error}}
 
                 <br/><br/>
                 <form 
                     action="{{ form_meta['action'] }} "
-                    method = "{{ form_meta['methods'] }}"/>
+                    method = "{{ form_meta['method'] }}"/>
                     
                     <label for="Name">Student Name</label>
                     <input id="Name" type="text" name="name"/>
@@ -28,7 +29,7 @@
             </div>
         {% endif %}
 
-        {% if page_type=="edit_student_detail" %}
+        {% if page_type=="edit_student_details" %}
             <div class="container">
                 <span class="highlight-blue">Update a Student Record</span>
                 <br/><br/>
@@ -50,7 +51,8 @@
                             <input
                                 id="{{name}}"
                                 type="text"
-                                name="{{name}}"/>
+                                name="{{name}}"
+                                value="{{value}}"/>
                             </td>
                         </tr>
                         {% endfor %}
@@ -70,6 +72,17 @@
                     
             </div>
         
+        {% endif %}
+
+        {% if page_type=='edit_student_success' %}
+        <div class='container'>
+            <p>The following student has been updated successfully</p>
+    
+            {% for name, value in record.items() %}
+            {{ name.replace('_', " ").title()}}:{{value}}
+        </br>
+            {% endfor %}
+        </div>
         {% endif %}
 
         {% if page_type=="edit_membership_empty" %}
