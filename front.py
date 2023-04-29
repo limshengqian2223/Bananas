@@ -267,12 +267,13 @@ def edit_student():
         # breakpoint()
         if 'registered' in request.args:
             record = dict(request.form)
-            print(39)
+            prev_name = record['prev_name']
+            del record['prev_name']
+            # sc.update(prev_name, record)
 
             return render_template('edit_info.html',
                                   page_type='edit_student_success',
                                   record = record)
-            # sc.insert(record)
             
         name = request.form['name']
         if sc.find(name) is not None:
