@@ -70,6 +70,18 @@
     </div>
     {% endif %}
 
+    {% if page_type=='add_cca_fail' %}
+    <div class='container'>
+        <p>The following CCA already exists!</p>
+
+        {% for name, value in cca.items() %}
+        {{ name.replace('_', " ").title()}}:{{value}}
+    </br>
+        {% endfor %}
+        <button type='button' onclick="history.go(-1)"> Edit </button>
+    </div>
+    {% endif %}
+
     {% if page_type=='new_activity' %}
         <div class='container'>
         <span class=''><p>Add a New Activity</p></span>
@@ -127,6 +139,18 @@
         {{ name.replace('_', " ").title()}}:{{value}}
     </br>
         {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if page_type=='add_activity_fail' %}
+    <div class='container'>
+        <p>The following Activity already exists!</p>
+
+        {% for name, value in activity.items() %}
+        {{ name.replace('_', " ").title()}}:{{value}}
+    </br>
+        {% endfor %}
+        <button type='button' onclick="history.go(-1)"> Edit </button>
     </div>
     {% endif %}
         
