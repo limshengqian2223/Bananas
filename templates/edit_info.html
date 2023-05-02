@@ -111,7 +111,8 @@
             <p>Please click on the cca you want to edit</p>
             <ol>
                 {% for cca in record %}
-                <li><a href="/edit_membership?edit?cca">{{cca}}</li>
+                <li><a href="/edit_membership?cca={{ cca }}&name={{ name }}">{{cca}}</li> <!-- so that when the page changes to page 3, we can carry over the cca name that the user wants to change, as well as their name--> 
+                <!-- it works through the request.args. So the args would be a dictionary, something like {"cca": "comp", "name" = "xy"} -->
                 {% endfor %}
             </ol>
         </div>
@@ -129,21 +130,25 @@
             method="{{form_meta['method']}}">
 
             <table>
-                {%for name, value in form_data.items()%}
                 <tr>
                     <td>
-                        <label for="{{name}}">
-                            {{ name.replace("_"," ").title()}}:</label>
+                        Student Name:
                     </td>
-
                     <td>
-                        <input id="{{name}}"
-                            type="text"
-                            name="{{name}}"
-                            value=""/>
+                        {{ form_data["student_name"] }}
+                        <input type="hidden" value={{ form_data["student_name"] }} name="student_name">
                     </td>
                 </tr>
-                {% endfor %}
+                
+                <tr>
+                    <td>
+                        <label for="student_cca"> CCA:
+                    </td>
+                    <td>
+                        <input id="student_cca" type="text" value={{ form_data["student_cca"] }} name="student_cca">
+                    </td>
+                </tr>
+                
                 <tr>
                 <td>
                     <label for="student_role">Student Role:</label>
@@ -183,19 +188,109 @@
         
         {% if page_type=="edit_participation_empty" %}
             <div class="container">
-                <span class="highlight-blue">Edit a Student Record</span>
+                <span class="highlight-blue">Edit a Student activity Record</span>
                 <br/><br/>
                 <span class="instructions">Use the following form to edit a Student Record</span>
 
                 <br/><br/>
                 <form 
                     action="{{ form_meta['action'] }} "
-                    method = "{{ form_meta['methods'] }}"/>
+                    method = "{{ form_meta['method'] }}"/>
                     
                     <label for="Name">Student Name</label>
                     <input id="Name" type="text" name="name"/>
                     <input type="submit" value="submit"/>
                 </form>
             </div>
+        {% endif %}
+
+        {% if page_type == 'edit_participation_choose' %}
+        <div class="container">
+            <p>Name: {{name}}</p><br/>
+            Class: {{class_}}
+
+            <p>Please click on the activity you want to edit</p>
+            <ol>
+                {% for activity in record %}
+                <li><a href="/edit_participation?activity={{ activity }}&name={{ name }}">{{activity}}</li> <!-- so that when the page changes to page 3, we can carry over the cca name that the user wants to change, as well as their name--> 
+                <!-- it works through the request.args. So the args would be a dictionary, something like {"cca": "comp", "name" = "xy"} -->
+                {% endfor %}
+            </ol>
+        </div>
+        {% endif %}
+
+        {% if page_type=="edit_indiv_participation_details" %}
+            <div class="container">
+                <span class="highlight-blue">Update a Student Activity Record</span>
+                <br/><br/>
+                <span class="instructions">Use the following form to update a Student Activity Record</span>
+                <br/><br/>
+
+        <form 
+            action= "{{form_meta['action']}}"
+            method="{{form_meta['method']}}">
+
+            <table>
+                <tr>
+                    <td>
+                        Student Name:
+                    </td>
+                    <td>
+                        {{ form_data["student_name"] }}
+                        <input type="hidden" value={{ form_data["student_name"] }} name="student_name">
+                    </td>
+                </tr>
+                
+                <tr>
+                    <td>
+                        <label for="student_activity"> Activity:
+                    </td>
+                    <td>
+                        <input id="student_activity" type="text" value={{ form_data["student_activity"] }} name="student_activity">
+                    </td>
+                </tr>
+                
+                <td>
+                    <label for="activity_cat">Activity Category:</label>
+                </td>
+                <td>
+                    <select name="activity_cat" id="activity_cat">
+                      <option value="Achievement">Achievement</option>
+                      <option value="Enrichment">Enrichment</option>
+                      <option value="Leadership">Leadership</option>
+                      <option value="Service">Service</option>
+                    </select>
+                </td>
+                </tr>
+                <tr>
+                    <td><label for="activity_sd">Start Date:</label></td>
+                    <td><input type="date" id="activity_sd" name="activity_sd"/>
+</td>
+                </tr>
+                <tr>
+                    <td><label for="activity_ed">End Date:</label></td>
+                    <td><input type="date" id="activity_ed" name="activity_ed"/></td>
+                </tr>
+                <td>
+                    <td>
+                        <input type="submit" value="Submit"/>
+                    </td>
+                </td>
+            </table>
+        </form>
+                    
+            </div>
+        
+        {% endif %}
+
+        {% if page_type=='edit_participation_success' %}
+        <div class='container'>
+            <p>The following student's activity has been updated successfully</p>
+    
+            {% for name, value in record.items() %}
+            {{ name.replace('_', " ").title()}}:{{value}}
+        </br>
+            {% endfor %}
+        </div>
         {% endif %}
     </body>

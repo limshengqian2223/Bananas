@@ -323,9 +323,9 @@ def edit_student():
                                   record = record)
             
         name = request.form['name']
-        if sc.find(name) is not None:
+        if sc.find_by_name(name) is not None:
             # print(record)
-            record = sc.find(name)
+            record = sc.find_by_name(name)
             del record['id']
             return render_template('edit_info.html',
                               page_type='edit_student_details',
@@ -351,15 +351,29 @@ def edit_membership():
     pass in: edited student CCA record (Update by DB)
     """
     if request.method == 'GET':
-        return render_template('edit_info.html',
-                              page_type='edit_membership_empty',
-                              form_meta={'action':'/edit_membership',
+        # Page 1: Where users enter the student name to see all the records which can be editted
+        # print(f"request.args: {dict(request.args)}")
+        if (dict(request.args) == {}):
+            return render_template('edit_info.html',
+                                  page_type='edit_membership_empty',
+                                  form_meta={'action':'/edit_membership',
+                                            'method':'post'},
+                                   form_data={'name':''})
+        
+        elif "cca" in dict(request.args).keys():
+            # Page 3: Users have selected which CCA record to edit.
+            # Allowing users to edit the chosen CCA record
+            args = dict(request.args)
+            return render_template('edit_info.html',
+                              page_type='edit_indiv_membership_details',
+                              form_meta={'action':'/edit_membership?registered',
                                         'method':'post'},
-                               form_data={'name':''})
+                                form_data={'student_name': args["name"],
+                                          'student_cca': args["cca"]})
     elif request.method == 'POST':
-        # breakpoint()
         if 'registered' in request.args:
             record = dict(request.form)
+            print(f"received record: {record}")
             # prev_name = record['prev_name']
             # del record['prev_name']
             # sct.update(record['name'], record)
@@ -367,28 +381,22 @@ def edit_membership():
             return render_template('edit_info.html',
                                   page_type='edit_membership_success',
                                   record = record)
-            
+
+        
+        # student name to find his/her records. Obtained from Page 1 form
         name = request.form['name']
-        if sct.find(name) is not None:
-            # breakpoint()
-            # print(record)
-            record = sct.find(name)
+
+        # if student has records
+        if sct.find_by_name(name) is not None:
+            record = sct.find_by_name(name)
             print(record)
             cca_list = []
             for indiv in record:
                 cca_list.append(indiv['cca name'])
             name = record[0]['student name']
             class_ = record[0]['student class']
-                
-            if 'edit' in request.args:
-                # breakpoint()
-                # print(request.args)
-                return render_template('edit_info.html',
-                                  page_type='edit_indiv_membership_details',
-                                  form_meta={'action':'/edit_membership?registered',
-                                            'method':'post'},
-                                    form_data={'student_name':name})
-            
+
+            # Page 2, displaying all the CCAs that the given student has joined
             return render_template('edit_info.html',
                                   page_type='edit_membership_choose',
                                   record = cca_list,
@@ -396,6 +404,7 @@ def edit_membership():
                                   class_ = class_)
             
         else:
+            # student has no cca records
             return render_template('edit_info.html',
                                   page_type='edit_membership_empty',
                                   form_meta={'action':'/edit_membership',
@@ -410,11 +419,68 @@ def edit_participation():
     
     Require: Student activity record (Update by DB)
     """
-    return render_template('edit_info.html',
-                          page_type='edit_participation_empty',
-                          form_meta={'action':'/edit_participation',
-                                    'method':'post'},
-                           form_data={'name':''})
+    
+    if request.method == 'GET':
+        # Page 1: Where users enter the student name to see all the records which can be editted
+        # print(f"request.args: {dict(request.args)}")
+        if (dict(request.args) == {}):
+            return render_template('edit_info.html',
+                                  page_type='edit_participation_empty',
+                                  form_meta={'action':'/edit_participation',
+                                            'method':'post'},
+                                   form_data={'name':''})
+        
+        elif "activity" in dict(request.args).keys():
+            # Page 3: Users have selected which CCA record to edit.
+            # Allowing users to edit the chosen CCA record
+            args = dict(request.args)
+            return render_template('edit_info.html',
+                              page_type='edit_indiv_participation_details',
+                              form_meta={'action':'/edit_participation?registered',
+                                        'method':'post'},
+                                form_data={'student_name': args["name"],
+                                          'student_activity': args["activity"]})
+    elif request.method == 'POST':
+        if 'registered' in request.args:
+            record = dict(request.form)
+            print(f"received record: {record}")
+            # prev_name = record['prev_name']
+            # del record['prev_name']
+            # sct.update(record['name'], record)
+
+            return render_template('edit_info.html',
+                                  page_type='edit_participation_success',
+                                  record = record)
+
+        
+        # student name to find his/her records. Obtained from Page 1 form
+        name = request.form['name']
+
+        # if student has records
+        if sat.find_by_name(name) is not None:
+            record = sat.find_by_name(name)
+            print(record)
+            activity_list = []
+            for indiv in record:
+                activity_list.append(indiv['activity name'])
+            name = record[0]['student name']
+            class_ = record[0]['student class']
+
+            # Page 2, displaying all the CCAs that the given student has joined
+            return render_template('edit_info.html',
+                                  page_type='edit_participation_choose',
+                                  record = activity_list,
+                                  name = name,
+                                  class_ = class_)
+            
+        else:
+            # student has no cca records
+            return render_template('edit_info.html',
+                                  page_type='edit_participation_empty',
+                                  form_meta={'action':'/edit_participation',
+                                            'method':'post'},
+                                  form_data={'name':''},
+                                  error='This Student does not exists!')
     
 
 @app.route('/delete_student', methods=['GET', 'POST'])
