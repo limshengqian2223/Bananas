@@ -206,32 +206,161 @@ def new_activity():
                           form_data={'activity_name':'',
                                     'activity_coordinator':''})
 
-@app.route('/view_student_cca', methods=['GET', 'POST'])
-def view_student_cca():
-    """
-    Require: student's cca (Finding by backend)
 
-    user pass in: student name
+@app.route('/view_student_profile', methods=['GET'])
+def view_student_profile():
     """
-    # breakpoint()
-    if request.method=="GET":
+    Require:
+    1. student's name
+    2. student's class
+    3. student's subjects
+    4. activities which the student has participated in
+    5. CCAs which the studet has participated in.
+
+    user pass in: Student's name whose profile they wish to find.
+    """
+
+    # Page 1, where users enter student name to find his/her records and profile
+    if dict(request.args) == {}:
+        return render_template('view_info.html',
+                              title="View Student Profile",
+                              page_type="find_student_profile",
+                              form_meta={
+                                  'action': '/view_student_profile',
+                                  'method': 'get'
+                              },
+                              form_data={
+                                  'student_name':''
+                              },
+                              error=None)
+    else:
+        form = dict(request.args)
+        student_name = form["student_name"]
+        
+        # if student exists in the db
+        if sc.find_by_name(student_name) is not None:
+            student_record = sc.find_by_name(student_name)
+
+            #the following few pop operations are to remove non essential fields from being displayed to the user.
+            student_record.pop("id")
+
+            student_cca_record = sct.find_by_name(student_name)
+            student_activity_record = sat.find_by_name(student_name)
+
+            if student_cca_record is not None:
+                for record in student_cca_record:
+                    record.pop("student class")
+                    record.pop("student name")
+                    
+            if student_activity_record is not None:
+                for record in student_activity_record:
+                    record.pop("student class")
+                    record.pop("student name")
+
+            return render_template('view_info.html',
+                                  title="View Student Profile",
+                                  page_type="show_student_profile",
+                                  student_record=student_record,
+                                  student_cca_record=student_cca_record,
+                                  student_activity_record=student_activity_record)
+            
+
+        # student does not exist in the db
+        else:
+            return render_template('view_info.html',
+                                  title = "View Student Profile",
+                                  page_type="find_student_profile",
+                                  form_meta={
+                                      'action': '/view_student_profile',
+                                      'method': 'get'
+                                  },
+                                  form_data={
+                                      'student_name': ''
+                                  },
+                                  error="student_not_found")
+
+
+@app.route('/view_by_class', methods=['GET'])
+def view_by_class():
+    """
+    Require: All the names of students in a given class
+
+    user pass in: class name
+    """
+    if dict(request.args) == {}:
+        return render_template('view_info.html',
+                              title="View students in a class ",
+                              page_type='find_class_profile',
+                              form_meta={
+                                  'action': '/view_by_class',
+                                  'method': 'get'
+                              },
+                              form_data={
+                                  'class_name':''
+                              },
+                              error=None)
+    else:
+        form = dict(request.args)
+        class_name = form["class_name"]
+        
+        #NEED TO CHECK IF A CLASS EXISTS!
+        # from pprint import pprint
+        # list_of_students = sc.find_by_class(class_name)
+        # pprint(list_of_students)
+
+        # if sc.find_by_class(class_name)
 
         return render_template('view_info.html',
-                              title='View Student CCA',
-                                page_type='view_cca',
-                              form_meta={'action':'/view_student_cca',
-                                        'method':'post'},
-                              form_data={'student_name':''})
+                              page_type="show_class_profile",
+                              title="Show class profile",
+                              list_of_students=list_of_students
+                              )
         
-    if request.method=="POST":
-        name=request.form["student_name"]
-        
-        name = sct.find(name)
-        
+
+
+@app.route('/view_by_cca', methods=['GET'])
+def view_by_cca():
+    """
+    Require: All the names of students in given CCA
+
+    user pass in: cca name
+    """
+    if dict(request.args) == {}:
         return render_template('view_info.html',
-                              title='View rubbish',
-                              page_type='view_cca_info',
-                              name=name)
+                              title='View by CCA',
+                                page_type='find_cca_profile',
+                              form_meta={'action':'/view_by_cca',
+                                        'method':'get'},
+                              form_data={'cca_name':''},
+                              error=None)
+
+    else:
+        form = dict(request.args)
+        cca_name = form["cca_name"]
+        
+        # If cca exists. 
+        if (cc.find_by_name(cca_name)):
+            
+            list_of_members = sct.find_by_cca(cca_name)
+            
+            cca_info = cc.find_by_name(cca_name)
+            if cca_info is not None:
+                cca_info.pop("id")
+            print(list_of_members)
+            return render_template('view_info.html',
+                                  title="Show CCA profile",
+                                  page_type="show_cca_profile",
+                                   cca_info=cca_info,
+                                  list_of_members=list_of_members)
+
+        else:
+            return render_template('view_info.html',
+                              title='View by CCA',
+                                page_type='find_cca_profile',
+                              form_meta={'action':'/view_by_cca',
+                                        'method':'get'},
+                              form_data={'cca_name':''},
+                              error="cca_not_found")
 
     
 
