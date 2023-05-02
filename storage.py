@@ -16,7 +16,7 @@ class RecordAlreadyExists(Exception):
     pass
 
 
-# class Collection: parent class
+    # class Collection: parent class
 #     """
 #     parent class for student, cca, and activity
 

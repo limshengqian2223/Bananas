@@ -177,16 +177,18 @@ def new_activity():
     
     """
     if 'registered' in request.args:
-        activity_name=request.form['activity_name']
-        cca_name=request.form['cca_name']
-        activity_cat=request.form['activity_cat']
-        activity_sd=9
-        activity_ed=9
-        activity_desc=9
+        activity = dict(request.form)
+        print(activity)
+        # activity_name=request.form['activity_name']
+        # cca_name=request.form['cca_name']
+        # activity_cat=request.form['activity_cat']
+        # activity_sd=9
+        # activity_ed=9
+        # activity_desc=9
 
-        activity={'activity_name':activity_name,
-                  'cca_name':cca_name,
-                  'activity_cat':activity_cat}
+        # activity={'activity_name':activity_name,
+        #           'cca_name':cca_name,
+        #           'activity_cat':activity_cat}
 
         if ac.insert(activity):
             return render_template('new_cca_activity.html',
@@ -204,7 +206,8 @@ def new_activity():
                           form_meta={'action':'/new_activity?registered',
                           'method':'post'},
                           form_data={'activity_name':'',
-                                    'activity_coordinator':''})
+                                    'activity_coordinator':'',
+                                    'activity_desc':''})
 
 @app.route('/view_student_cca', methods=['GET', 'POST'])
 def view_student_cca():
@@ -226,12 +229,25 @@ def view_student_cca():
     if request.method=="POST":
         name=request.form["student_name"]
         
-        name = sct.find(name)
+        record = sct.find(name)
+        student_name = record[0]['student name']
+        class_ = record[0]['student class']
+        print(record)
+
+        cca_list = []
+        role_list = []
+        for indiv in record:
+            cca_list.append(indiv['cca name'])
+            role_list.append(indiv['role'])
+        # print(cca_list)
         
         return render_template('view_info.html',
-                              title='View rubbish',
+                              title='View CCA',
                               page_type='view_cca_info',
-                              name=name)
+                              cca_record=cca_list,
+                              role_record=role_list,
+                              name = student_name,
+                              class_=class_)
 
     
 
@@ -243,13 +259,44 @@ def view_student_activity():
 
     pass in : name
     """
-    return render_template('view_info.html',
-                          title='View Student Activity',
-                            page_type='view_activity',
-                          form_meta={'action':'/view_student_activity',
-                                    'method':'post'},
-                          form_data={'student_name':''})
-    
+    if request.method == 'GET':
+        return render_template('view_info.html',
+                              title='View Student Activity',
+                                page_type='view_activity',
+                              form_meta={'action':'/view_student_activity',
+                                        'method':'post'},
+                              form_data={'student_name':''})
+
+    if request.method == 'POST':
+        name=request.form["student_name"]
+        
+        record = sat.find(name)
+        student_name = record[0]['student name']
+        class_ = record[0]['student class']
+        # print(record)
+
+        activity_list = []
+        role_list = []
+        award_list = []
+        hours_list = []
+        
+        for indiv in record:
+            activity_list.append(indiv['cca name'])
+            role_list.append(indiv['role'])
+            award_list.append(indiv['award'])
+            hours_list.append(indiv['hours'])
+        # print(cca_list)
+        
+        return render_template('view_info.html',
+                              title='View rubbish',
+                              page_type='view_activity_info',
+                              cca_record=cca_list,
+                              role_record=role_list,
+                              award_record=award_list,
+                              hours_record=hours_list,
+                              name = student_name,
+                              class_=class_)
+        
 @app.route('/edit_student', methods=['GET','POST'])
 def edit_student():
     """
@@ -303,11 +350,58 @@ def edit_membership():
     
     pass in: edited student CCA record (Update by DB)
     """
-    return render_template('edit_info.html',
-                          page_type='edit_membership_empty',
-                          form_meta={'action':'/edit_membership',
-                                    'method':'post'},
-                           form_data={'name':''})
+    if request.method == 'GET':
+        return render_template('edit_info.html',
+                              page_type='edit_membership_empty',
+                              form_meta={'action':'/edit_membership',
+                                        'method':'post'},
+                               form_data={'name':''})
+    elif request.method == 'POST':
+        # breakpoint()
+        if 'registered' in request.args:
+            record = dict(request.form)
+            # prev_name = record['prev_name']
+            # del record['prev_name']
+            # sct.update(record['name'], record)
+
+            return render_template('edit_info.html',
+                                  page_type='edit_membership_success',
+                                  record = record)
+            
+        name = request.form['name']
+        if sct.find(name) is not None:
+            # breakpoint()
+            # print(record)
+            record = sct.find(name)
+            print(record)
+            cca_list = []
+            for indiv in record:
+                cca_list.append(indiv['cca name'])
+            name = record[0]['student name']
+            class_ = record[0]['student class']
+                
+            if 'edit' in request.args:
+                # breakpoint()
+                # print(request.args)
+                return render_template('edit_info.html',
+                                  page_type='edit_indiv_membership_details',
+                                  form_meta={'action':'/edit_membership?registered',
+                                            'method':'post'},
+                                    form_data={'student_name':name})
+            
+            return render_template('edit_info.html',
+                                  page_type='edit_membership_choose',
+                                  record = cca_list,
+                                  name = name,
+                                  class_ = class_)
+            
+        else:
+            return render_template('edit_info.html',
+                                  page_type='edit_membership_empty',
+                                  form_meta={'action':'/edit_membership',
+                                            'method':'post'},
+                                  form_data={'name':''},
+                                  error='This Student does not exists!')
 
 @app.route('/edit_participation', methods=['GET','POST'])
 def edit_participation():
@@ -321,3 +415,117 @@ def edit_participation():
                           form_meta={'action':'/edit_participation',
                                     'method':'post'},
                            form_data={'name':''})
+    
+
+@app.route('/delete_student', methods=['GET', 'POST'])
+def delete_student():
+    if request.method == 'GET':
+        return render_template('delete_details.html',
+                              page_type='delete_student_empty',
+                              form_meta={'action':'/delete_student',
+                                        'method':'post'},
+                              form_data={'name':''})
+    elif request.method == 'POST':
+        name = request.form['name']
+        if sc.delete(name) is None:
+            return render_template('delete_details.html',
+                                  page_type='delete_student_success',
+                                  name=name)
+        else:
+            return render_template('delete_details.html',
+                                  page_type='delete_student_empty',
+                                  form_meta={'action':'/delete_student',
+                                            'method':'post'},
+                                  form_data={'name':''},
+                                  error='This student does not exists! Try again.')
+
+@app.route('/delete_student_cca', methods=['GET', 'POST'])
+def delete_student_cca():
+    if request.method == 'GET':
+        return render_template('delete_details.html',
+                              page_type='delete_student_cca_empty',
+                              form_meta={'action':'/delete_student_cca',
+                                        'method':'post'},
+                              form_data={'name':''})
+
+    elif request.method == 'POST':
+        name = request.form['name']
+        # go = False
+        # if go:
+        if sct.delete(name) is None:
+            return render_template('delete_details.html',
+                                  page_type='delete_student_cca_success',
+                                  name=name)
+        else:
+            return render_template('delete_details.html',
+                                  page_type='delete_student_cca_empty',
+                                  form_meta={'action':'/delete_student_cca',
+                                            'method':'post'},
+                                  form_data={'name':''},
+                                  error='This student does not exists! Try again.')
+
+@app.route('/delete_student_activity', methods=['GET', 'POST'])
+def delete_student_activity():
+    if request.method == 'GET':
+        return render_template('delete_details.html',
+                              page_type='delete_student_activity_empty',
+                              form_meta={'action':'/delete_student_activity',
+                                        'method':'post'},
+                              form_data={'name':''})
+    elif request.method == 'POST':
+        name = request.form['name']
+        if sat.delete(name) is None:
+            return render_template('delete_details.html',
+                                  page_type='delete_student_activity_success',
+                                  name=name)
+        else:
+            return render_template('delete_details.html',
+                                  page_type='delete_student_activity_empty',
+                                  form_meta={'action':'/delete_student_activity',
+                                            'method':'post'},
+                                  form_data={'name':''},
+                                  error='This student does not exists! Try again.')
+            
+@app.route('/delete_cca', methods=['GET', 'POST'])
+def delete_cca():
+    if request.method == 'GET':
+        return render_template('delete_details.html',
+                              page_type='delete_cca_empty',
+                              form_meta={'action':'/delete_cca',
+                                        'method':'post'},
+                              form_data={'cca_name':''})
+    elif request.method == 'POST':
+        name = request.form['name']
+        if cc.delete(name) is None:
+            return render_template('delete_details.html',
+                                  page_type='delete_cca_success',
+                                  name=name)
+        else:
+            return render_template('delete_details.html',
+                                  page_type='delete_cca_empty',
+                                  form_meta={'action':'/delete_cca',
+                                            'method':'post'},
+                                  form_data={'name':''},
+                                  error='This CCA does not exists! Try again.')
+
+@app.route('/delete_activity', methods=['GET', 'POST'])
+def delete_activity():
+    if request.method == 'GET':
+        return render_template('delete_details.html',
+                              page_type='delete_activity_empty',
+                              form_meta={'action':'/delete_activity',
+                                        'method':'post'},
+                              form_data={'activity_name':''})
+    elif request.method == 'POST':
+        name = request.form['name']
+        if ac.delete(name) is None:
+            return render_template('delete_details.html',
+                                  page_type='delete_activity_success',
+                                  name=name)
+        else:
+            return render_template('delete_details.html',
+                                  page_type='delete_activity_empty',
+                                  form_meta={'action':'/delete_activity',
+                                            'method':'post'},
+                                  form_data={'name':''},
+                                  error='This activity does not exists! Try again.')

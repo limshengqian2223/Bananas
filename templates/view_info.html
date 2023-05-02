@@ -31,8 +31,22 @@
         {% endif %}
 
         {% if page_type =="view_cca_info" %}
-        gnowgiwe
-        {{name}}
+        <div class="container">
+            <p>Below is the list of CCAs the student is a member of</p>
+            </br>Name: {{name}}</br>Class:{{class_}}</br>
+        <table>
+            <tr>
+                <td>CCA Name</td><td>Role</td>
+            </tr>
+            {% for cca in cca_record %}
+            {% for role in role_record %}
+                <tr>
+                    <td>{{cca.title()}}</td><td>{{role.title()}}</td>
+                </tr>
+            {% endfor %}
+            {% endfor %}
+        </table>
+        </div>
         {% endif %}
 
         {% if page_type=='view_activity' %}
@@ -54,5 +68,35 @@
                 <input type="submit" value="Submit"/>
         </div>
         {% endif %}
+
+        {% if page_type =="view_activity_info" %}
+        <div class="container">
+            <p>Below is the list of CCAs the student is a member of</p>
+            </br>Name: {{name}}</br>Class:{{class_}}</br>
+        <table>
+            <tr>
+                <td>Activity Name</td>
+                <td>Role</td>
+                <td>Award</td>
+                <td>Hours</td>
+            </tr>
+            {% for cca in cca_record %}
+            {% for role in role_record %}
+            {% for award in award_record %}
+            {% for hours in hours_record %}
+                <tr>
+                    <td>{{cca.title()}}</td>
+                    <td>{{role.title()}}</td>
+                    <td>{{award.title()}}</td>
+                    <td>{{hours.title()}}</td>
+                </tr>
+            {% endfor %}
+            {% endfor %}
+            {% endfor %}
+            {% endfor %}
+        </table>
+        </div>
+        {% endif %}
+    
     </body>
 </html>

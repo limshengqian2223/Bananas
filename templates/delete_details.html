@@ -1,0 +1,173 @@
+<!DOCTYPE HTML>
+
+<html>
+
+    <head>
+        <title>{{title}}</title>
+        <link rel="stylesheet" href="{{url_for('static', filename='css/styles.css')}}">
+    </head>
+
+    {% include 'header.html' %}
+
+    <body>
+        {% if page_type =='delete_student_empty' %}
+        <div class="container">
+            <p>Delete A Student Record</p>
+            <p>Please enter name of student you want to delete the record of</p>
+            {{error}}
+            
+            <form 
+                action="{{form_meta['action']}}",
+                method="{{form_meta['method']}}">
+
+                {% for name, value in form_data.items() %}
+
+                <label for="{{name}}">
+                    {{name.title()}}:</label>
+                <input id="{{name}}"
+                    type="text"
+                    name="{{name}}"
+                    value="{{value}}"/>
+                {% endfor %}
+                <input type="submit" value="Submit"/>
+        </div>
+        {% endif %}
+
+        {% if page_type =='delete_student_success' %}
+        <div class="container">
+            <p>The following student has been deleted successfully</p>
+            <ul>
+            <li>{{name}}</li>
+            </ul>
+        </div>
+        {% endif %}
+
+
+        {% if page_type =='delete_student_cca_empty' %}
+        <div class="container">
+            <p>Delete A Student Record</p>
+            <p>Please enter name of student you want to delete the record of</p>
+            {{error}}
+            
+            <form 
+                action="{{form_meta['action']}}",
+                method="{{form_meta['method']}}">
+
+                {% for name, value in form_data.items() %}
+
+                <label for="{{name}}">
+                    {{name.title()}}:</label>
+                <input id="{{name}}"
+                    type="text"
+                    name="{{name}}"
+                    value="{{value}}"/>
+                {% endfor %}
+                <input type="submit" value="Submit"/>
+        </div>
+        {% endif %}
+
+        {% if page_type =='delete_student_cca_success' %}
+        <div class="container">
+            <ul>
+            <p>The following student's membership has been deleted successfully</p>
+            <li>{{name}}</li>
+            </ul>
+        </div>
+        {% endif %}
+
+        {% if page_type =='delete_student_activity_empty' %}
+        <div class="container">
+            <p>Delete A Student Record</p>
+            <p>Please enter name of student you want to delete the record</p>
+            {{error}}
+            
+            <form 
+                action="{{form_meta['action']}}",
+                method="{{form_meta['method']}}">
+
+                {% for name, value in form_data.items() %}
+
+                <label for="{{name}}">
+                    {{name.title()}}:</label>
+                <input id="{{name}}"
+                    type="text"
+                    name="{{name}}"
+                    value="{{value}}"/>
+                {% endfor %}
+                <input type="submit" value="Submit"/>
+        </div>
+        {% endif %}
+
+        {% if page_type =='delete_student_activity_success' %}
+        <div class="container">
+            <ul>
+            <p>The following student's participation has been deleted successfully</p>
+            <li>{{name}}</li>
+            </ul>
+        </div>
+        {% endif %}
+
+        {% if page_type =='delete_cca_empty' %}
+        <div class="container">
+            <p>Delete A CCA</p>
+            <p>Please enter name of CCA you want to delete</p>
+            {{error}}
+            
+            <form 
+                action="{{form_meta['action']}}",
+                method="{{form_meta['method']}}">
+
+                {% for name, value in form_data.items() %}
+
+                <label for="{{name}}">
+                    {{name.replace('_',' ').title()}}:</label>
+                <input id="{{name}}"
+                    type="text"
+                    name="{{name}}"
+                    value="{{value}}"/>
+                {% endfor %}
+                <input type="submit" value="Submit"/>
+        </div>
+        {% endif %}
+
+        {% if page_type =='delete_cca_success' %}
+        <div class="container">
+            <ul>
+            <p>The following CCA has been deleted successfully</p>
+            <li>{{name}}</li>
+            </ul>
+        </div>
+        {% endif %}
+
+        {% if page_type =='delete_activity_empty' %}
+        <div class="container">
+            <p>Delete an Activity Record</p>
+            <p>Please enter name of Activity you want to delete</p>
+            {{error}}
+            
+            <form 
+                action="{{form_meta['action']}}",
+                method="{{form_meta['method']}}">
+
+                {% for name, value in form_data.items() %}
+
+                <label for="{{name}}">
+                    {{name.replace('_',' ').title()}}:</label>
+                <input id="{{name}}"
+                    type="text"
+                    name="{{name}}"
+                    value="{{value}}"/>
+                {% endfor %}
+                <input type="submit" value="Submit"/>
+        </div>
+        {% endif %}
+
+        {% if page_type =='delete_activity_success' %}
+        <div class="container">
+            <ul>
+            <p>The following Activity has been deleted successfully</p>
+            <li>{{name}}</li>
+            </ul>
+        </div>
+        {% endif %}
+    </body>
