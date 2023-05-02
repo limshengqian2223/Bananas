@@ -1,9 +1,6 @@
 from typing import Union
 import sqlite3
 
-#for normal tables: find & delete shld be the same
-
-
 class NameNotFoundError(Exception):
     """Student/CCA/Activity name is not found."""
     pass
@@ -25,8 +22,7 @@ class RecordAlreadyExists(Exception):
 
 #     methods:
 #     +insert() #child
-#     +find()
-#     +findall()
+#     +find_by_name()
 #     +update() #child
 #     # +delete() optional for now
 #     """
@@ -43,12 +39,12 @@ class RecordAlreadyExists(Exception):
 #         """
 #         print("not implemented in child class yet")
 
-#     def find(self, name):
+#     def find_by_name(self, name):
 #         """
 
 #         """
 
-#     # def findall(self):
+#     # def find_by_nameall(self):
 #     #     """
 #     #     return all records
 #     #     """
@@ -95,7 +91,8 @@ class StudentCollection:
     Attributes:
     
     Methods:
-    + find
+    + find_by_name
+    + find_by_class
     + insert
     + update
     + delete
@@ -105,17 +102,29 @@ class StudentCollection:
         self._dbname = dbname
         self._tblname = tblname
 
-    def find(self, name: str) -> 'Union[None, list[dict]]':
+    def __repr__(self):
+        return f"StudentCollection(DB: {self._dbname}, TBL: {self._tblname})"
+
+    def find_by_name(self, name: str) -> 'Union[None, list[dict]]':
         """
         Takes in student name
-        Finds the record in student table
+        finds and returns the record in student table
 
         returns None if record not found
         """
 
-        find = f'''
-                SELECT *
-                FROM "{self._tblname}"
+        find_by_name = f'''
+                SELECT
+                "student"."id" AS "id",
+                "student"."name" AS "name",
+                "student"."age" AS "age",
+                "class"."name" AS "class",
+                "student"."year_enrolled" AS "year enrolled",
+                "student"."grad_year" AS "graduating year"
+                FROM "student"
+                INNER JOIN "class"
+                ON "student"."class_id" = "class"."id"
+                
                 WHERE "student"."name" = ?;
                 '''
 
@@ -123,7 +132,7 @@ class StudentCollection:
             conn.row_factory = sqlite3.Row
             c = conn.cursor()
 
-            c.execute(find, (name, ))
+            c.execute(find_by_name, (name, ))
 
             result = c.fetchone()
 
@@ -132,26 +141,70 @@ class StudentCollection:
 
         else:
             return None
+        
+    def find_by_class(self, student_class):
+        """
+        Takes in student class
+        finds and returns all students in the class
 
-    # def find_all(self) ->:
-    #     """
-    #     Returns all record of students
-    #     """
-    #     pass
+        returns None if no records found
+        """
+        find_class = '''
+                    SELECT * FROM "class"
+                    WHERE "name" = ?
+                    '''
+        with sqlite3.connect(self._dbname) as conn:
+            conn.row_factory = sqlite3.Row
+            c = conn.cursor()
 
-    def insert(self, record: dict) -> None:
+            c.execute(find_class, (student_class,))
+            result = c.fetchone()
+            
+        if result:
+            result = dict(result)
+        else:
+            return False #class doesnt exist
+        
+        find_students = '''
+                        SELECT 
+                        "class"."name" AS "class",
+                        "student"."name" AS "student name",
+                        "student"."age" AS "student age"
+                        FROM "student"
+                        INNER JOIN "class"
+                        ON "student"."class_id" = "class"."id"
+
+                        WHERE "class"."id" = ?
+                        '''
+        
+        with sqlite3.connect(self._dbname) as conn:
+            conn.row_factory = sqlite3.Row
+            c = conn.cursor()
+
+            c.execute(find_students, (result['id'],))
+            result = c.fetchall()
+
+        if result:
+            for i in range(len(result)):
+                result[i] = dict(result[i])
+
+            return result
+        else:
+            return None
+
+    def insert(self, record: dict) -> True:
         """
         Takes in dictionary containing student's name, age, class, year_enrolled, grad_year
 
         record = {"student_name": str,
                    "student_age": str,
-                   "student_class": int
+                   "student_class": int,
                    "student_year_enrolled": str,
                    "student_grad_year": str}
 
         Inserts student data into table
 
-        Returns None
+        Returns True
 
         Raise error when student (name) already exists
         
@@ -159,9 +212,8 @@ class StudentCollection:
         Next step(1): Looks like data validation is necessary.
         """
 
-        if self.find(record["student_name"]
-                     ) is not None:  # Student name already exists
-            raise RecordAlreadyExists
+        if self.find_by_name(record["student_name"]) is not None:  # Student name already exists
+            return False
 
         insert = '''
                 INSERT INTO "student" (
@@ -181,31 +233,64 @@ class StudentCollection:
 
             conn.commit()
 
-    def update(self, old_name, new_record
-               ):  #decide how we are gonna find the exising record first
+        return True
+
+    def update(self, student_name, new_record) -> True:
         """
-        Takes in updated student name, age, year_enrolled, grad_year, student_subjects
-        Finds existing record
+        Takes in student_name, and updated student name, age, year_enrolled, grad_year, student_subjects
+        finds existing record
+        return False if record doesnt exist
+        
         Update with new student details
 
-        Returns None
+        new_record = {"student_name": str,
+                   "student_age": str,
+                   "student_class": int
+                   "student_year_enrolled": str,
+                   "student_grad_year": str}
+        Returns True
 
         Next step(0): Raise error when new student details have wrong data type. Or when user is trying to edit a student who does not exist.
         """
-        pass
+        if self.find_by_name(student_name) is None:  #record doesnt exist
+            return False
 
-    def delete(self, name):
+        update = '''
+                UPDATE "student" SET 
+                "name" = ?,
+                "age" = ?,
+                "class" = ?,
+                "year_enrolled" = ?,
+                "grad_year" = ?
+                WHERE "name" = ?
+                ''' 
+        
+        with sqlite3.connect(self._dbname) as conn:
+            c = conn.cursor()
+
+            c.execute(update, (new_record["student_name"],
+                               new_record["student_age"],
+                               new_record["student_class"],
+                               new_record["student_year_enrolled"],
+                               new_record["student_grad_year"],
+                               student_name)) 
+
+            conn.commit()
+
+        return True
+
+    def delete(self, name) -> True:
         """
         Takes in student name
         Deletes student record from "students" table.
 
-        Returns None
+        Returns True
 
         Next step(0): Raise error when something unexpected occurs (perhaps name not found)
         Next step (1): Need to delete this student's record from the activities and cca records as well. This can probably call on the CCA/Activity Collection
         """
-        if self.find(name) is None:  #record doesn't exist
-            raise NameNotFoundError
+        if self.find_by_name(name) is None:  #record doesn't exist
+            return False
 
         delete = '''
                 DELETE FROM "student"
@@ -220,35 +305,16 @@ class StudentCollection:
             conn.commit()
 
         print(f'{name} deleted')
-        return None
-
-    # def add_student_membership(self):
-    #     """
-    #     Takes in student name, CCA name, student's role in CCA
-    #     Adds student membership in given CCA, with given role.
-
-    #     Returns None
-
-    #     Raise error when student or cca does not exist.
-
-    #     Next step(0):
-
-    #     FOR DORA: this process will occur in the junction table. (Also possible for it to be implemented in the cca class. What if we just have a new table)
-    #     """
-    #     pass
-
-    # def update_student_membership(self):
-    #     pass
-
+        return True
 
 class CCACollection:
     """
     Attributes:
     
     Methods:
-    + find 
+    + find_by_name 
     + insert 
-    + update (optional)
+    + update
     + delete 
     """
 
@@ -256,15 +322,18 @@ class CCACollection:
         self._dbname = dbname
         self._tblname = tblname
 
-    def find(self, name):
+    def __repr__(self):
+        return f"CCACollection(DB: {self._dbname}, TBL: {self._tblname})"
+
+    def find_by_name(self, name):
         """
         Takes in cca name
-        Finds the record in cca table
+        finds and returns the record in cca table
 
         returns None if record not found
         """
 
-        find = f'''
+        find_by_name = f'''
                 SELECT *
                 FROM "{self._tblname}"
                 WHERE "cca"."name" = ?;
@@ -274,7 +343,7 @@ class CCACollection:
             conn.row_factory = sqlite3.Row
             c = conn.cursor()
 
-            c.execute(find, (name, ))
+            c.execute(find_by_name, (name, ))
 
             result = c.fetchone()
 
@@ -284,7 +353,7 @@ class CCACollection:
         else:
             return None
 
-    def insert(self, record: dict) -> None:
+    def insert(self, record: dict) -> True:
         """
         Takes in dictionary containing cca's name and type,
 
@@ -293,7 +362,7 @@ class CCACollection:
 
         Inserts cca data into table
 
-        Returns None
+        Returns True
 
         Raise error when cca (name) already exists
         
@@ -301,9 +370,9 @@ class CCACollection:
         Next step(1): Looks like data validation is necessary.
         """
 
-        if self.find(
+        if self.find_by_name(
                 record["cca_name"]) is not None:  # Student name already exists
-            raise RecordAlreadyExists
+            return False
 
         insert = '''
                 INSERT INTO "cca" (
@@ -320,31 +389,57 @@ class CCACollection:
 
             conn.commit()
 
-    def update(self, new_record):  #same as student collection
+        return True
+
+    def update(self, cca_name, new_record):
         """
-        Takes in updated cca_name, cca_type
-        Finds existing record
+        Takes in student_name & updated cca name & type
+        finds existing record
+        return False if record doesnt exist
+        
         Update with new cca details
 
-        Returns None
+        new_record = {"cca_name": str,
+                      "cca_type": str}
+        Returns True
 
         Next step(0): Raise error when new cca details have wrong data type. Or when user is trying to edit a cca who does not exist.
         """
-        pass
+        if self.find_by_name(cca_name) is None:  #record doesnt exist
+            return False
+
+        update = '''
+                UPDATE "cca" SET 
+                "name" = ?,
+                "type" = ?
+                WHERE "name" = ?
+                '''
+
+        with sqlite3.connect(self._dbname) as conn:
+            c = conn.cursor()
+
+            c.execute(update, (new_record["cca_name"],
+                               new_record["cca_type"],
+                               cca_name))
+
+            conn.commit()
+
+        return True
 
     def delete(self, name):
         """
         Takes in CCA name
         Delete CCA from "cca" table (maybe when cca close down? Or user type in wrong cca name)
 
-        Returns None
+        Returns True
 
         Raise Error when no CCA does not exist
 
         Next step(0): Remove students and activities from CCAs, when a CCA is deleted.
         """
-        if self.find(name) is None:  #record doesn't exist
-            raise NameNotFoundError
+        if self.find_by_name(name) is None:  #record doesn't exist
+            # raise NameNotFoundError
+            return False
 
         delete = '''
                 DELETE FROM "cca"
@@ -359,7 +454,7 @@ class CCACollection:
             conn.commit()
 
         print(f'{name} deleted')
-        return None
+        return True
 
 
 class ActivityCollection:
@@ -367,25 +462,29 @@ class ActivityCollection:
     Attributes:
     
     Methods:
-    + find 
+    + find_by_name 
     + insert 
-    + update (optional)
+    + update
     + delete 
     """
 
     def __init__(self, dbname: str, tblname: str):
         self._dbname = dbname
         self._tblname = tblname
+        self._ccac = CCACollection(self._dbname, "cca")
 
-    def find(self, name):
+    def __repr__(self):
+        return f"ActivityCollection(DB: {self._dbname}, TBL: {self._tblname})"
+
+    def find_by_name(self, name):
         """
         Takes in activity name
-        Finds the record in activity table
+        finds and returns the record in activity table
 
         returns None if record not found
         """
 
-        find = f'''
+        find_by_name = f'''
                 SELECT *
                 FROM "{self._tblname}"
                 WHERE "activity"."name" = ?;
@@ -395,26 +494,23 @@ class ActivityCollection:
             conn.row_factory = sqlite3.Row
             c = conn.cursor()
 
-            c.execute(find, (name, ))
+            c.execute(find_by_name, (name, ))
 
-            result = c.fetchall()
+            result = c.fetchone()
 
         if result:
-            for i in range(len(result)):
-                result[i] = dict(result[i])
-
-            return result
-
+            return dict(result)
         else:
             return None
 
-    def insert(self, record: dict) -> None:
+    def insert(self, record: dict) -> True:
         """
         Takes in dictionary containing activity's name, start date, end date, description, and category
 
         record = {"activity_name": text,
-                  "activity_sd": int,    #IMPT: are we using delimiters? eg. 2023-01-30
-                  "activity_ed": int / None,    #what are the keys tht im gna get from xy
+                  "cca_name": text,-   #xy pass in the name but i insert the id
+                  "activity_sd": int,   #using delimiters eg. 2023-01-30
+                  "activity_ed": int / None,  
                   "activity_desc": str,
                   "activity_cat": str}
 
@@ -428,19 +524,23 @@ class ActivityCollection:
         Next step(1): Looks like data validation is necessary.
         """
 
-        if self.find(record["activity_name"]
-                     ) is not None:  # activity name already exists
-            raise RecordAlreadyExists
+        if self.find_by_name(record["activity_name"]) is not None:  # activity name already exists            
+            return False
+
+        cca_id = self._ccac.find_by_name(record["cca_name"])["id"]
+
+        record["cca_id"] = cca_id
 
         insert = '''
                 INSERT INTO "activity" (
                 "name",
+                "cca_id",
                 "start_date",
                 "end_date",
                 "description",
                 "category"
                 ) VALUES (
-                :activity_name, :activity_sd), :activity_ed, :activity_desc, :activity_cat
+                :activity_name, :cca_id, :activity_sd, :activity_ed, :activity_desc, :activity_cat)
                 '''
 
         with sqlite3.connect(self._dbname) as conn:
@@ -450,31 +550,76 @@ class ActivityCollection:
 
             conn.commit()
 
-    def update(self, new_record):
-        """
-        Takes in updated cca_name, cca_type
-        Finds existing record
-        Update with new cca details
+        return True
 
+    def update(self, activity_name, new_record):
+        """
+        Takes in updated activity name, cca_name, activity sd, ed, desc, cat
+        finds existing record
+        return False if record doesnt exist
+        
+        Update with new activity details
+
+        new_record = {"activity_name": str,
+                      "cca_name": int,
+                      "activity_sd": str,
+                      "activity_ed": str,
+                      "activity_desc": str,
+                      "activity_cat": str}
         Returns None
 
-        Next step(0): Raise error when new cca details have wrong data type. Or when user is trying to edit a cca who does not exist.
+        Next step(0): Raise error when new activity details have wrong data type. Or when user is trying to edit an activity that does not exist.
         """
-        pass
+        if self.find_by_name(activity_name) is None:  #record doesnt exist
+            return False
+        
+        cca_rec = self._ccac.find_by_name(new_record["cca_name"])
+
+        if cca_rec is None:
+            return False
+
+        new_record["cca_id"] = cca_rec["id"]
+
+        update = '''
+                UPDATE "activity" SET 
+                "name" = ?,
+                "cca_id" = ?,
+                "start_date" = ?,
+                "end_date" = ?,
+                "description" = ?,
+                "category" = ?
+                WHERE "name" = ?
+                '''
+
+        with sqlite3.connect(self._dbname) as conn:
+            c = conn.cursor()
+
+            c.execute(update, (new_record["activity_name"],
+                               new_record["cca_id"],
+                               new_record["activity_sd"],
+                               new_record["activity_ed"],
+                               new_record["activity_desc"],
+                               new_record["activity_cat"],
+                               activity_name))
+
+            conn.commit()
+
+        return True
 
     def delete(self, name):
         """
-        Takes in CCA name
-        Delete CCA from "cca" table (maybe when cca close down? Or user type in wrong cca name)
+        Takes in activity name
+        Delete activity from "activity" table (maybe when cca close down? Or user type in wrong cca name)
 
         Returns None
 
-        Raise Error when no CCA does not exist
+        Raise Error when activity does not exist
 
-        Next step(0): Remove students and activities from CCAs, when a CCA is deleted.
+        Next step(0): Remove students from activities, when an activity is deleted.
         """
-        if self.find(name) is None:  #record doesn't exist
-            raise NameNotFoundError
+        if self.find_by_name(name) is None:  #record doesn't exist
+            # raise NameNotFoundError
+            return False
 
         delete = '''
                 DELETE FROM "activity"
@@ -488,30 +633,27 @@ class ActivityCollection:
 
             conn.commit()
 
-        return None
-
+        return True
 
 #junction tables
 class StudentCCATable:
     """
     methods:
-    +find(student_name)
+    +find_by_name(student_name)
     +insert(record)
-    +update(record)
+    +update(student_name, cca_name, new_record)
+    +delete(student_name, cca_name)
     """
 
-    
     def __init__(self, dbname):
         self._dbname = dbname
         self._sc = StudentCollection(self._dbname, "student")
         self._ccac = CCACollection(self._dbname, "cca")
 
-        
     def __repr__(self):
         return f"StudentCCATable(DB: {self._dbname})"
 
-    
-    def find(self, student_name):
+    def find_by_name(self, student_name):
         """
         Takes in student name
         
@@ -519,11 +661,12 @@ class StudentCCATable:
         
         returns None if record not found
         """
-        
-        join_and_find = '''
+
+        find_by_name = '''
                         SELECT 
                         "student"."name" AS "student name",
-                        "student"."class" AS "student class",
+                        "class"."name" AS "student class",
+
                         "cca"."name" AS "cca name",
                         "student_cca"."role" as "role"
                         FROM "student"
@@ -531,6 +674,8 @@ class StudentCCATable:
                         ON "student"."id" = "student_cca"."student_id"
                         INNER JOIN "cca"
                         ON "student_cca"."cca_id" = "cca"."id"
+                        INNER JOIN "class"
+                        ON "student"."class_id" = "class"."id"
                         
                         WHERE "student"."name" = ?
                         '''
@@ -539,7 +684,7 @@ class StudentCCATable:
             conn.row_factory = sqlite3.Row
             c = conn.cursor()
 
-            c.execute(join_and_find, (student_name, ))
+            c.execute(find_by_name, (student_name, ))
 
             result = c.fetchall()
 
@@ -551,6 +696,40 @@ class StudentCCATable:
 
             else:
                 return None
+
+    def find_by_cca(self, cca_name):
+        """
+        Takes in cca name
+        finds and returns the students in the cca
+
+        returns None if record not found
+        """
+        find_by_cca = '''
+                    SELECT 
+                    "cca"."name" AS "cca",
+                    "student"."name" AS "student name"
+                    FROM "student_cca"
+                    INNER JOIN "cca"
+                    ON "student_cca"."cca_id" = "cca"."id"
+                    INNER JOIN "student"
+                    ON "student_cca"."student_id" = "student"."id"
+
+                    WHERE "cca"."name" = ?
+                    '''
+        with sqlite3.connect('capstone.db') as conn:
+            conn.row_factory = sqlite3.Row
+            c = conn.cursor()
+
+            c.execute(find_by_cca, (cca_name,))
+            result = c.fetchall()
+
+        if result:
+            for i in range(len(result)):
+                result[i] = dict(result[i])
+
+            return result
+        else:
+            return None
 
     def insert(self, record):
         """
@@ -565,25 +744,25 @@ class StudentCCATable:
         get the student & cca id & insert into junction table
 
         (to be inserted) record = {"student_id": str,
-                                    "cca_id": str
+                                    "cca_id": str,
                                     "student_role": str
                                     }
-        """        
-        student_id = self._sc.find(record['student_name'])["id"]
-        cca_id = self._ccac.find(record['student_cca'])["id"]
-        
-        #If student or CCA doesnt exist raise NameNotFoundError
-        if (student_id is None) or (cca_id is None):
-            raise NameNotFoundError
-            
-        existing_rec = self.find(record['student_name'])
-        
-        for rec in existing_rec:
-            if (rec['student name'] == record['student_name']) and (rec['cca name'] == record['student_cca']):
-                raise RecordAlreadyExists
+        """
+        student_rec = self._sc.find_by_name(record['student_name'])
+        cca_rec = self._ccac.find_by_name(record['student_cca'])
 
-        record['student_id'] = student_id
-        record['cca_id'] = cca_id
+        if (student_rec is None) or (cca_rec is None): #student or CCA doesnt exist
+            return False
+
+        existing_rec = self.find_by_name(record['student_name'])
+
+        if existing_rec is not None:
+            for rec in existing_rec:
+                if (rec['student name'] == record['student_name']) and (rec['cca name'] == record['student_cca']):
+                    return False
+
+        record['student_id'] = student_rec['id']
+        record['cca_id'] = cca_rec['id']
 
         insert = '''
                 INSERT INTO "student_cca" (
@@ -602,38 +781,213 @@ class StudentCCATable:
 
             conn.commit()
 
-class StudentSubjectTable:
+        return True
+    
+    def update(self, student_name, cca_name, new_record):
+        """
+        takes in student_name, cca_name,
+        and updated cca_name, rols
+        **note: student name cannot be updated
+        
+        find_by_names existing record
+        return False if record doesnt exist
+
+        new_record = {"student_cca": str,
+                      "student_role": str
+                     }
+        returns True
+        """
+        existing_rec = self.find_by_name(student_name) #type(existing_rec) = list
+
+        if existing_rec is None: #student doesnt exist in student_cca table
+            # print('record doesnt exist')
+            return False
+        
+        #find_by_nameing the record to update
+        rec_to_update = {}
+        for rec in existing_rec:
+            if rec["cca name"] == cca_name:
+                rec_to_update = rec
+
+        if rec_to_update == {}: #student record with particular cca doesnt exist
+            # print('no record to update')
+            return False
+        
+        #checking if new_record already exists in db
+        for rec in existing_rec:
+            if (rec['student name'] == student_name) and (rec['cca name'] == new_record['student_cca']):
+                # print('new record alr exists')
+                return False
+
+        student_rec = self._sc.find_by_name(student_name)
+        old_cca_rec = self._ccac.find_by_name(cca_name)
+        new_cca_rec = self._ccac.find_by_name(new_record['student_cca']) #checking if new cca exists
+        
+        # print(student_rec)
+        # print(old_cca_rec)
+        # print(new_cca_rec)
+
+        if (student_rec is None) or (old_cca_rec is None) or (new_cca_rec is None):
+            return False
+        
+        student_id = student_rec["id"]
+        new_cca_id = new_cca_rec["id"]
+        old_cca_id = old_cca_rec["id"]
+        
+        update = '''
+                UPDATE "student_cca" SET
+                "cca_id" = ?,
+                "role" = ?
+                WHERE "student_id" = ? and "cca_id" = ?
+                '''
+
+        with sqlite3.connect('capstone.db') as conn:
+            c = conn.cursor()
+
+            c.execute(update, (new_cca_id, new_record['student_role'], student_id, old_cca_id))
+
+            conn.commit()
+
+        return True
+
+    def delete(self, student_name, cca_name):
+        """
+        Takes in student name
+        Delete record from student_cca table
+
+        Returns True
+
+        returns False when record doesnt exist
+        """
+        if self.find_by_name(student_name) is None:  #record doesnt exist
+            return False
+
+        student_rec = self._sc.find_by_name(student_name)
+        cca_rec = self._ccac.find_by_name(cca_name)
+
+        if (student_rec is None) or (cca_rec is None): #student/cca doesnt exist
+            return False
+
+        student_id = student_rec['id']
+        cca_id = cca_rec['id']
+
+        delete = '''
+                DELETE FROM "student_cca"
+                WHERE "student_id" = ? and "cca_id" = ?
+                '''
+
+        with sqlite3.connect(self._dbname) as conn:
+            c = conn.cursor()
+
+            c.execute(delete, (student_id, cca_id))
+
+            conn.commit()
+
+        return True
+
+# class StudentSubjectTable:
+#     """
+#     methods:
+#     +find_by_name(student_name)
+#     +insert(record)
+#     """
+
+#     def __init__(self, dbname):
+#         self._dbname = dbname
+
+#     def __repr__(self):
+#         return f"StudentSubjectTable(DB: {self._dbname})"
+
+#     def find_by_name(self, student_name):
+#         """
+#         Takes in student name
+        
+#         joins student & subject tables
+        
+#         returns None if record not found
+#         """
+#         join_and_find_by_name = '''
+#                         SELECT
+#                         "student"."name" AS "student name",
+#                         "student"."class" AS "student class"
+#                         "subject"."name" AS "subject name"
+#                         FROM "student"
+
+#                         INNER JOIN "student_subject"
+#                         ON "student"."id" = "student_subject"."student_id"
+#                         INNER JOIN "subject"
+#                         ON "student_subject"."subject_id" = "subject"."id"
+                        
+#                         WHERE "student"."name" = ?
+#                         '''
+
+#         with sqlite3.connect(self._dbname) as conn:
+#             conn.row_factory = sqlite3.Row
+#             c = conn.cursor()
+
+#             c.execute(join_and_find_by_name, (student_name, ))
+
+#             result = c.fetchall()
+
+#             if result:
+#                 for i in range(len(result)):
+#                     result[i] = dict(result[i])
+
+#                 return result
+
+#             else:
+#                 return None
+
+#     def insert(self, record):
+#         """
+#         checks if student exists
+#         inserts new student cca record
+
+#         record = {}
+#         """
+#         pass
+
+class StudentActivityTable:
     """
     methods:
-    +find(student_name)
+    +find_by_name(student_name)
     +insert(record)
+    +update(record)
+    +delete(student_name)
     """
 
     def __init__(self, dbname):
         self._dbname = dbname
+        self._sc = StudentCollection('capstone.db', 'student')
+        self._ac = ActivityCollection('capstone.db', 'activity')
 
     def __repr__(self):
-        return f"StudentSubjectTable(DB: {self._dbname})"
+        return f"StudentActivityTable(DB: {self._dbname})"
 
-    def find(self, student_name):
+    def find_by_name(self, student_name):
         """
         Takes in student name
         
-        joins student & subject tables
+        joins student & activity tables
         
         returns None if record not found
         """
-        join_and_find = '''
+        join_and_find_by_name = '''
                         SELECT
                         "student"."name" AS "student name",
-                        "student"."class" AS "student class"
-                        "subject"."name" AS "subject name"
-                        FROM "student"
+                        "class"."name" AS "student class",
 
-                        INNER JOIN "student_subject"
-                        ON "student"."id" = "student_subject"."student_id"
-                        INNER JOIN "subject"
-                        ON "student_subject"."subject_id" = "subject"."id"
+                        "activity"."name" AS "activity name",
+                        "student_activity"."role" AS "role",
+                        "student_activity"."award" AS "award",
+                        "student_activity"."hours" AS "hours"
+                        FROM "student"
+                        INNER JOIN "student_activity"
+                        ON "student"."id" = "student_activity"."student_id"
+                        INNER JOIN "activity"
+                        ON "student_activity"."activity_id" = "activity"."id"
+                        INNER JOIN "class"
+                        ON "student"."class_id" = "class"."id"
                         
                         WHERE "student"."name" = ?
                         '''
@@ -642,7 +996,7 @@ class StudentSubjectTable:
             conn.row_factory = sqlite3.Row
             c = conn.cursor()
 
-            c.execute(join_and_find, (student_name, ))
+            c.execute(join_and_find_by_name, (student_name, ))
 
             result = c.fetchall()
 
@@ -657,64 +1011,155 @@ class StudentSubjectTable:
 
     def insert(self, record):
         """
-        checks if student exists
-        inserts new student cca record
-
-        record = {}
-        """
-        pass
+        checks if student & activity exists
         
-class StudentActivityTable:
-    """
-    methods:
-    +find(student_name)
-    +insert(record)
-    """
+        record = {'student_name': str,
+                  'student_activity': str,
+                  'student_role': str/None (default = participant),
+                  'student_award': str/None,
+                  'student_hours': int}
 
-    def __init__(self, dbname):
-        self._dbname = dbname
+        inserts new activity record
 
-    def __repr__(self):
-        return f"StudentActivityTable(DB: {self._dbname})"
-
-    def find(self, student_name):
+        (to be inserted) record = {'student_id': int,
+                                   'activity_id': int,
+                                   'student_role': str/None (default = participant),
+                                   'student_award': str/None,
+                                   'student_hours': int}
         """
-        Takes in student name
-        
-        joins student & activity tables
-        
-        returns None if record not found
-        """
-        join_and_find = '''
-                        SELECT
-                        "student"."name" AS "student name",
-                        "student"."class" AS "student class"
-                        "activity"."name" AS "activity name",
-                        "student_activity"."role" AS "role",
-                        "student_activity"."award" AS "award",
-                        "student_activity"."hours" AS "hours"
-                        FROM "student"
-                        INNER JOIN "student_activity"
-                        ON "student"."id" = "student_activity"."student_id"
-                        INNER JOIN "activity"
-                        ON "student_activity"."activity_id" = "activity"."id"
-                        
-                        WHERE "student"."name" = ?
-                        '''
+        student_rec = self._sc.find_by_name(record["student_name"])
+        activity_rec = self._ac.find_by_name(record["student_activity"])
+
+        if (student_rec is None) or (activity_rec is None):
+            return False
+
+        existing_rec = self.find_by_name(record["student_name"])
+
+        if existing_rec is not None:
+            for rec in existing_rec:
+                if (rec["student name"] == record["student_name"]) and (
+                        rec["activity name"] == record["student_activity"]) and (
+                            rec["role"] == record["student_role"]):
+                    return False  #record alr exists
+
+        record["student_id"] = student_rec["id"]
+        record["activity_id"] = activity_rec["id"]
+
+        insert = '''
+                INSERT INTO "student_activity" (
+                "student_id",
+                "activity_id",
+                "role",
+                "award",
+                "hours"
+                ) VALUES (
+                :student_id, :activity_id, :student_role, :student_award, :student_hours
+                )
+                '''
 
         with sqlite3.connect(self._dbname) as conn:
-            conn.row_factory = sqlite3.Row
             c = conn.cursor()
 
-            c.execute(join_and_find, (student_name, ))
+            c.execute(insert, record)
 
-            result = c.fetchall()
+            conn.commit()
 
-            if result:
-                for i in range(len(result)):
-                    result[i] = dict(result[i])
+        return True
 
-                return result
+    def update(self, student_name, activity_name, new_record):
+        """
+        takes in student_name, activity_name,
+        and updated activity name, role, award, hours
+        **note: student name cannot be updated
+        
+        find_by_names existing record
+        return False if record doesnt exist
 
-            else:
-                return None
+        new_record = {'student_activity': str,
+                    'student_role': str/None (default = participant),
+                    'student_award': str/None,
+                    'student_hours': int}
+        returns True
+        """
+        existing_rec = self.find_by_name(student_name) #type(existing_rec) = list
+        
+        if existing_rec is None: #student doesnt exist in student_cca table
+            return False
+        
+        #find_by_nameing the record to update
+        rec_to_update = {}
+        for rec in existing_rec:
+            if rec["activity name"] == activity_name:
+                rec_to_update = rec
+
+        if rec_to_update == {}: #student record with particular cca doesnt exist
+            return False
+        
+        student_rec = self._sc.find_by_name(student_name)
+        old_activity_rec = self._ac.find_by_name(activity_name)
+        new_activity_rec = self._ac.find_by_name(new_record['student_activity']) #checking if new activity exists
+
+        if (student_rec is None) or (old_activity_rec is None) or (new_activity_rec is None):
+            return False
+
+        student_id = student_rec["id"]
+        old_activity_id = old_activity_rec["id"]
+        new_activity_id = new_activity_rec["id"]
+
+        if new_record["student_role"] is None:
+            new_record["student_role"] = 'participant'
+
+        update = '''
+                UPDATE "student_activity" SET
+                "activity_id" = ?,
+                "role" = ?,
+                "award" = ?,
+                "hours" = ?
+                WHERE "student_id" = ? and "activity_id" = ?
+                '''
+
+        with sqlite3.connect('capstone.db') as conn:
+            c = conn.cursor()
+
+            c.execute(update, (new_activity_id, new_record["student_role"], new_record["student_award"], new_record["student_hours"], student_id, old_activity_id))
+
+            conn.commit()
+
+        return True
+
+    def delete(self, student_name, activity_name):
+        """
+        Takes in student name and activity_name
+        Delete record from student_activity table
+
+        Returns True
+
+        returns False when record doesnt exist
+        """
+        if self.find_by_name(student_name) is None:  #record doesnt exist
+            return False
+
+        student_rec = self._sc.find_by_name(student_name)
+        activity_rec = self._ac.find_by_name(activity_name)
+
+        if (student_rec is None) or (activity_rec is None): #student/activity doesnt exist
+            return False
+        
+        student_id = student_rec['id']
+        activity_id = activity_rec['id']
+
+        print(student_id, activity_id)
+
+        delete = '''
+                DELETE FROM "student_activity"
+                WHERE "student_id" = ? and "activity_id" = ?
+                '''
+
+        with sqlite3.connect(self._dbname) as conn:
+            c = conn.cursor()
+
+            c.execute(delete, (student_id, activity_id ))
+
+            conn.commit()
+
+        return True
