@@ -12,81 +12,67 @@ class RecordAlreadyExists(Exception):
     """
     pass
 
+class Collection:
+    """parent class for collections"""
+    def __init__(self, dbname):
+        self._dbname = dbname
 
-# class Collection: parent class
-#     """
-#     parent class for student, cca, and activity
+    def _execute_dml(self, query, data):
+        with sqlite3.connect(self._dbname) as conn:
+            c = conn.cursor()
 
-#     attributes:
-#     -dbname
+            c.execute(query, data)
 
-#     methods:
-#     +insert() #child
-#     +find_by_name()
-#     +update() #child
-#     # +delete() optional for now
-#     """
-#     def __init__(self, dbname, tblname):
-#         self._dbname = dbname
-#         self._tblname = tblname
+            conn.commit()
 
-#     def __repr__(self):
-#         return f"Collection(DB: {self._dbname}, TBL: {self._tblname})"
+    def _execute_dql(self, query, data):
+        with sqlite3.connect(self._dbname) as conn:
+            conn.row_factory = sqlite3.Row
+            c = conn.cursor()
 
-#     def insert(self):
-#         """
-#         to be implemented in child classes
-#         """
-#         print("not implemented in child class yet")
+            c.execute(query, data)
+            result = c.fetchall()
 
-#     def find_by_name(self, name):
-#         """
-
-#         """
-
-#     # def find_by_nameall(self):
-#     #     """
-#     #     return all records
-#     #     """
-
-#     # def delete(self, name: str, ):
-#     #     """
-#     #     deletes the record with
-#     #     """
-
-# def update(self, prev_record, new_record):
-#         """
-#         takes in prev_record (the record to be updated), and new_record (info to update record with)
-#         """
-#         pass
-
-#     def _execute_dql(self, query):
-#         """retrieve records etc"""
-#         with sqlite3.connect(self._dbname) as conn:
-#             c = conn.cursor()
-
-#             c.execute(query)
-#             result = c.fetchall()
-
-#         #conn.close()
-
-#         return result
-
-#     def _execute_dml(self, query, params):
-#         """insert, delete, update etc"""
-#         with sqlite3.connect(self._dbname) as conn:
-#             c = conn.cursor()
-
-#             c.execute(query, params)
-#             result = c.fetchall()
-
-#             conn.commit()
-#         #conn.close()
-
-#         return result
+        if result:
+            if len(result) == 1:
+                result = dict(result[0])
+                return result
+            else:
+                for i in range(len(result)):
+                    result[i] = dict(result[i])
+                return result
+        else:
+            return None
 
 
-class StudentCollection:
+class ClassCollection(Collection):
+    """
+    methods:
+    + find
+    """
+    def __init__(self, dbname: str, tblname: str):
+        self._dbname = dbname
+        self._tblname = tblname
+
+    def __repr__(self):
+        return f"ClassCollection(DB: {self._dbname}, TBL: {self._tblname})"
+
+    def find_by_name(self, class_name):
+        """
+        takes in class name
+        finds and returns class record
+
+        returns None if record not found
+        """
+        find_by_name = f'''
+                        SELECT *
+                        FROM {self._tblname}
+                        WHERE "name" = ?
+                        '''
+        result = self._execute_dql(find_by_name, (class_name,))
+        return result
+
+class StudentCollection(Collection):
     """
     Attributes:
     
@@ -101,6 +87,7 @@ class StudentCollection:
     def __init__(self, dbname: str, tblname: str):
         self._dbname = dbname
         self._tblname = tblname
+        self._cc = ClassCollection(self._dbname, "class")
 
     def __repr__(self):
         return f"StudentCollection(DB: {self._dbname}, TBL: {self._tblname})"
@@ -127,20 +114,9 @@ class StudentCollection:
                 
                 WHERE "student"."name" = ?;
                 '''
-
-        with sqlite3.connect(self._dbname) as conn:
-            conn.row_factory = sqlite3.Row
-            c = conn.cursor()
-
-            c.execute(find_by_name, (name, ))
-
-            result = c.fetchone()
-
-        if result:
-            return dict(result)
-
-        else:
-            return None
+        
+        result = self._execute_dql(find_by_name, (name,))
+        return result
         
     def find_by_class(self, student_class):
         """
@@ -149,22 +125,12 @@ class StudentCollection:
 
         returns None if no records found
         """
-        find_class = '''
-                    SELECT * FROM "class"
-                    WHERE "name" = ?
-                    '''
-        with sqlite3.connect(self._dbname) as conn:
-            conn.row_factory = sqlite3.Row
-            c = conn.cursor()
-
-            c.execute(find_class, (student_class,))
-            result = c.fetchone()
-            
-        if result:
-            result = dict(result)
-        else:
-            return False #class doesnt exist
+        class_rec = self._cc.find_by_name(student_class)
+        if class_rec is None: #class doesnt exist
+            return False
         
+        class_id = class_rec['id']
+
         find_students = '''
                         SELECT 
                         "class"."name" AS "class",
@@ -176,21 +142,9 @@ class StudentCollection:
 
                         WHERE "class"."id" = ?
                         '''
-        
-        with sqlite3.connect(self._dbname) as conn:
-            conn.row_factory = sqlite3.Row
-            c = conn.cursor()
-
-            c.execute(find_students, (result['id'],))
-            result = c.fetchall()
-
-        if result:
-            for i in range(len(result)):
-                result[i] = dict(result[i])
-
-            return result
-        else:
-            return None
+    
+        result = self._execute_dql(find_students, (class_id,))
+        return result
 
     def insert(self, record: dict) -> True:
         """
@@ -199,8 +153,8 @@ class StudentCollection:
         record = {"student_name": str,
                    "student_age": str,
                    "student_class": int,
-                   "student_year_enrolled": str,
-                   "student_grad_year": str}
+                   "student_year_enrolled": int,
+                   "student_grad_year": int}
 
         Inserts student data into table
 
@@ -215,23 +169,21 @@ class StudentCollection:
         if self.find_by_name(record["student_name"]) is not None:  # Student name already exists
             return False
 
+        class_rec = self._cc.find_by_name(record["student_class"])
+        record['class_id'] = class_rec['id']
+
         insert = '''
                 INSERT INTO "student" (
                 "name",
                 "age",
-                "class",
+                "class_id",
                 "year_enrolled",
                 "grad_year"
                 ) VALUES (
-                :student_name, :student_age, :student_class, :student_year_enrolled, :student_grad_year)
+                :student_name, :student_age, :class_id, :student_year_enrolled, :student_grad_year)
                 '''
 
-        with sqlite3.connect(self._dbname) as conn:
-            c = conn.cursor()
-
-            c.execute(insert, record)
-
-            conn.commit()
+        self._execute_dml(insert, record)
 
         return True
 
@@ -255,28 +207,29 @@ class StudentCollection:
         if self.find_by_name(student_name) is None:  #record doesnt exist
             return False
 
+        class_rec = self._cc.find_by_name(new_record['student_class'])
+        if class_rec is None:
+            return False
+        
+        new_record['student_class_id'] = class_rec['id']
+
         update = '''
                 UPDATE "student" SET 
                 "name" = ?,
                 "age" = ?,
-                "class" = ?,
+                "class_id" = ?,
                 "year_enrolled" = ?,
                 "grad_year" = ?
                 WHERE "name" = ?
                 ''' 
-        
-        with sqlite3.connect(self._dbname) as conn:
-            c = conn.cursor()
+        data = (new_record["student_name"],
+                new_record["student_age"],
+                new_record["student_class_id"],
+                new_record["student_year_enrolled"],
+                new_record["student_grad_year"],
+                student_name)
 
-            c.execute(update, (new_record["student_name"],
-                               new_record["student_age"],
-                               new_record["student_class"],
-                               new_record["student_year_enrolled"],
-                               new_record["student_grad_year"],
-                               student_name)) 
-
-            conn.commit()
-
+        self._execute_dml(update, data)
         return True
 
     def delete(self, name) -> True:
@@ -297,17 +250,10 @@ class StudentCollection:
                 WHERE "student"."name" = ?
                 '''
 
-        with sqlite3.connect(self._dbname) as conn:
-            c = conn.cursor()
-
-            c.execute(delete, (name, ))
-
-            conn.commit()
-
-        print(f'{name} deleted')
+        self._execute_dml(delete, (name,))
         return True
 
-class CCACollection:
+class CCACollection(Collection):
     """
     Attributes:
     
@@ -338,20 +284,9 @@ class CCACollection:
                 FROM "{self._tblname}"
                 WHERE "cca"."name" = ?;
                 '''
-
-        with sqlite3.connect(self._dbname) as conn:
-            conn.row_factory = sqlite3.Row
-            c = conn.cursor()
-
-            c.execute(find_by_name, (name, ))
-
-            result = c.fetchone()
-
-        if result:
-            return dict(result)
-
-        else:
-            return None
+        
+        result = self._execute_dql(find_by_name, (name,))
+        return result
 
     def insert(self, record: dict) -> True:
         """
@@ -382,13 +317,7 @@ class CCACollection:
                 :cca_name, :cca_type)
                 '''
 
-        with sqlite3.connect(self._dbname) as conn:
-            c = conn.cursor()
-
-            c.execute(insert, record)
-
-            conn.commit()
-
+        self._execute_dml(insert, record)
         return True
 
     def update(self, cca_name, new_record):
@@ -415,15 +344,11 @@ class CCACollection:
                 WHERE "name" = ?
                 '''
 
-        with sqlite3.connect(self._dbname) as conn:
-            c = conn.cursor()
-
-            c.execute(update, (new_record["cca_name"],
-                               new_record["cca_type"],
-                               cca_name))
-
-            conn.commit()
-
+        data = (new_record["cca_name"],
+                new_record["cca_type"],
+                cca_name)
+        
+        self._execute_dml(update, data)
         return True
 
     def delete(self, name):
@@ -438,26 +363,18 @@ class CCACollection:
         Next step(0): Remove students and activities from CCAs, when a CCA is deleted.
         """
         if self.find_by_name(name) is None:  #record doesn't exist
-            # raise NameNotFoundError
             return False
 
         delete = '''
                 DELETE FROM "cca"
                 WHERE "cca"."name" = ?
                 '''
-
-        with sqlite3.connect(self._dbname) as conn:
-            c = conn.cursor()
-
-            c.execute(delete, (name, ))
-
-            conn.commit()
-
-        print(f'{name} deleted')
+        
+        self._execute_dml(delete, (name,))
         return True
 
 
-class ActivityCollection:
+class ActivityCollection(Collection):
     """
     Attributes:
     
@@ -490,18 +407,8 @@ class ActivityCollection:
                 WHERE "activity"."name" = ?;
                 '''
 
-        with sqlite3.connect(self._dbname) as conn:
-            conn.row_factory = sqlite3.Row
-            c = conn.cursor()
-
-            c.execute(find_by_name, (name, ))
-
-            result = c.fetchone()
-
-        if result:
-            return dict(result)
-        else:
-            return None
+        result = self._execute_dql(find_by_name, (name,))
+        return result
 
     def insert(self, record: dict) -> True:
         """
@@ -527,9 +434,12 @@ class ActivityCollection:
         if self.find_by_name(record["activity_name"]) is not None:  # activity name already exists            
             return False
 
-        cca_id = self._ccac.find_by_name(record["cca_name"])["id"]
+        cca_rec = self._ccac.find_by_name(record["cca_name"])
 
-        record["cca_id"] = cca_id
+        if cca_rec is None:
+            return False
+
+        record["cca_id"] = cca_rec['id']
 
         insert = '''
                 INSERT INTO "activity" (
@@ -543,13 +453,7 @@ class ActivityCollection:
                 :activity_name, :cca_id, :activity_sd, :activity_ed, :activity_desc, :activity_cat)
                 '''
 
-        with sqlite3.connect(self._dbname) as conn:
-            c = conn.cursor()
-
-            c.execute(insert, record)
-
-            conn.commit()
-
+        self._execute_dml(insert, record)
         return True
 
     def update(self, activity_name, new_record):
@@ -590,20 +494,15 @@ class ActivityCollection:
                 "category" = ?
                 WHERE "name" = ?
                 '''
-
-        with sqlite3.connect(self._dbname) as conn:
-            c = conn.cursor()
-
-            c.execute(update, (new_record["activity_name"],
-                               new_record["cca_id"],
-                               new_record["activity_sd"],
-                               new_record["activity_ed"],
-                               new_record["activity_desc"],
-                               new_record["activity_cat"],
-                               activity_name))
-
-            conn.commit()
-
+        data = (new_record["activity_name"],
+                new_record["cca_id"],
+                new_record["activity_sd"],
+                new_record["activity_ed"],
+                new_record["activity_desc"],
+                new_record["activity_cat"],
+                activity_name)
+       
+        self._execute_dml(update, data)
         return True
 
     def delete(self, name):
@@ -618,25 +517,18 @@ class ActivityCollection:
         Next step(0): Remove students from activities, when an activity is deleted.
         """
         if self.find_by_name(name) is None:  #record doesn't exist
-            # raise NameNotFoundError
             return False
 
         delete = '''
                 DELETE FROM "activity"
                 WHERE "activity"."name" = ?
                 '''
-
-        with sqlite3.connect(self._dbname) as conn:
-            c = conn.cursor()
-
-            c.execute(delete, (name, ))
-
-            conn.commit()
-
+        
+        self._execute_dml(delete, (name,))
         return True
 
 #junction tables
-class StudentCCATable:
+class StudentCCATable(Collection):
     """
     methods:
     +find_by_name(student_name)
@@ -658,6 +550,8 @@ class StudentCCATable:
         Takes in student name
         
         joins student & cca tables
+
+        returns a list of records of ccas the student is in
         
         returns None if record not found
         """
@@ -677,30 +571,30 @@ class StudentCCATable:
                         INNER JOIN "class"
                         ON "student"."class_id" = "class"."id"
                         
-                        WHERE "student"."name" = ?
                         '''
+                        # WHERE "student"."name" = ?
 
         with sqlite3.connect(self._dbname) as conn:
             conn.row_factory = sqlite3.Row
             c = conn.cursor()
 
-            c.execute(find_by_name, (student_name, ))
+            c.execute(find_by_name)
 
             result = c.fetchall()
 
-            if result:
-                for i in range(len(result)):
-                    result[i] = dict(result[i])
+        if result:
+            for i in range(len(result)):
+                result[i] = dict(result[i])
 
-                return result
+            return result
 
-            else:
-                return None
+        else:
+            return None
 
     def find_by_cca(self, cca_name):
         """
         Takes in cca name
-        finds and returns the students in the cca
+        finds and returns a list of records of the students in the cca
 
         returns None if record not found
         """
@@ -729,7 +623,7 @@ class StudentCCATable:
 
             return result
         else:
-            return None
+            return None        
 
     def insert(self, record):
         """
@@ -756,10 +650,13 @@ class StudentCCATable:
 
         existing_rec = self.find_by_name(record['student_name'])
 
-        if existing_rec is not None:
-            for rec in existing_rec:
-                if (rec['student name'] == record['student_name']) and (rec['cca name'] == record['student_cca']):
-                    return False
+        # if existing_rec is not None:
+            # for rec in existing_rec:
+            #     # if (rec['student name'] == record['student_name']) and (rec['cca name'] == record['student_cca']):
+            #         # return False
+            #     print(rec)
+
+        print(existing_rec)
 
         record['student_id'] = student_rec['id']
         record['cca_id'] = cca_rec['id']
@@ -774,14 +671,14 @@ class StudentCCATable:
                 )
                 '''
 
-        with sqlite3.connect(self._dbname) as conn:
-            c = conn.cursor()
+        # with sqlite3.connect(self._dbname) as conn:
+        #     c = conn.cursor()
 
-            c.execute(insert, record)
+        #     c.execute(insert, record)
 
-            conn.commit()
+        #     conn.commit()
 
-        return True
+        # return True
     
     def update(self, student_name, cca_name, new_record):
         """
@@ -890,6 +787,7 @@ class StudentCCATable:
 #     methods:
 #     +find_by_name(student_name)
 #     +insert(record)
+#     +
 #     """
 
 #     def __init__(self, dbname):
@@ -947,7 +845,7 @@ class StudentCCATable:
 #         """
 #         pass
 
-class StudentActivityTable:
+class StudentActivityTable(Collection):
     """
     methods:
     +find_by_name(student_name)
