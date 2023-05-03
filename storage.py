@@ -571,14 +571,14 @@ class StudentCCATable(Collection):
                         INNER JOIN "class"
                         ON "student"."class_id" = "class"."id"
                         
+                        WHERE "student"."name" = ?
                         '''
-                        # WHERE "student"."name" = ?
 
         with sqlite3.connect(self._dbname) as conn:
             conn.row_factory = sqlite3.Row
             c = conn.cursor()
 
-            c.execute(find_by_name)
+            c.execute(find_by_name, (student_name,))
 
             result = c.fetchall()
 
@@ -671,14 +671,14 @@ class StudentCCATable(Collection):
                 )
                 '''
 
-        # with sqlite3.connect(self._dbname) as conn:
-        #     c = conn.cursor()
+        with sqlite3.connect(self._dbname) as conn:
+            c = conn.cursor()
 
-        #     c.execute(insert, record)
+            c.execute(insert, record)
 
-        #     conn.commit()
+            conn.commit()
 
-        # return True
+        return True
     
     def update(self, student_name, cca_name, new_record):
         """
@@ -782,69 +782,6 @@ class StudentCCATable(Collection):
 
         return True
 
-# class StudentSubjectTable:
-#     """
-#     methods:
-#     +find_by_name(student_name)
-#     +insert(record)
-#     +
-#     """
-
-#     def __init__(self, dbname):
-#         self._dbname = dbname
-
-#     def __repr__(self):
-#         return f"StudentSubjectTable(DB: {self._dbname})"
-
-#     def find_by_name(self, student_name):
-#         """
-#         Takes in student name
-        
-#         joins student & subject tables
-        
-#         returns None if record not found
-#         """
-#         join_and_find_by_name = '''
-#                         SELECT
-#                         "student"."name" AS "student name",
-#                         "student"."class" AS "student class"
-#                         "subject"."name" AS "subject name"
-#                         FROM "student"
-
-#                         INNER JOIN "student_subject"
-#                         ON "student"."id" = "student_subject"."student_id"
-#                         INNER JOIN "subject"
-#                         ON "student_subject"."subject_id" = "subject"."id"
-                        
-#                         WHERE "student"."name" = ?
-#                         '''
-
-#         with sqlite3.connect(self._dbname) as conn:
-#             conn.row_factory = sqlite3.Row
-#             c = conn.cursor()
-
-#             c.execute(join_and_find_by_name, (student_name, ))
-
-#             result = c.fetchall()
-
-#             if result:
-#                 for i in range(len(result)):
-#                     result[i] = dict(result[i])
-
-#                 return result
-
-#             else:
-#                 return None
-
-#     def insert(self, record):
-#         """
-#         checks if student exists
-#         inserts new student cca record
-
-#         record = {}
-#         """
-#         pass
-
 class StudentActivityTable(Collection):
     """
     methods:
@@ -870,7 +807,7 @@ class StudentActivityTable(Collection):
         
         returns None if record not found
         """
-        join_and_find_by_name = '''
+        find_by_name = '''
                         SELECT
                         "student"."name" AS "student name",
                         "class"."name" AS "student class",
@@ -894,7 +831,7 @@ class StudentActivityTable(Collection):
             conn.row_factory = sqlite3.Row
             c = conn.cursor()
 
-            c.execute(join_and_find_by_name, (student_name, ))
+            c.execute(find_by_name, (student_name, ))
 
             result = c.fetchall()
 
@@ -955,13 +892,7 @@ class StudentActivityTable(Collection):
                 )
                 '''
 
-        with sqlite3.connect(self._dbname) as conn:
-            c = conn.cursor()
-
-            c.execute(insert, record)
-
-            conn.commit()
-
+        self._execute_dml(insert, record)
         return True
 
     def update(self, student_name, activity_name, new_record):
@@ -1046,18 +977,10 @@ class StudentActivityTable(Collection):
         student_id = student_rec['id']
         activity_id = activity_rec['id']
 
-        print(student_id, activity_id)
-
         delete = '''
                 DELETE FROM "student_activity"
                 WHERE "student_id" = ? and "activity_id" = ?
                 '''
 
-        with sqlite3.connect(self._dbname) as conn:
-            c = conn.cursor()
-
-            c.execute(delete, (student_id, activity_id ))
-
-            conn.commit()
-
+        self._execute_dml(delete, (student_id, activity_id))
         return True
