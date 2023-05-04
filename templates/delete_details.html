@@ -14,7 +14,7 @@
         <div class="container">
             <p>Delete A Student Record</p>
             <p>Please enter name of student you want to delete the record of</p>
-            {{error}}
+            <span class="error">{{error}}</span>
             
             <form 
                 action="{{form_meta['action']}}",
@@ -47,7 +47,7 @@
         <div class="container">
             <p>Delete A Student Record</p>
             <p>Please enter name of student you want to delete the record of</p>
-            {{error}}
+            <span class="error">{{error}}</span>
             
             <form 
                 action="{{form_meta['action']}}",
@@ -75,11 +75,42 @@
         </div>
         {% endif %}
 
+        {% if page_type =='delete_student_cca_choose' %}
+        <div class="container">
+            <p>Please choose the CCA that you want to remove the student's membership from</p>
+            <form 
+                action="{{form_meta['action']}}"
+                method="{{form_meta['method']}}">
+                <table>
+                    <tr>
+                        <td>Name:</td><td>{{name}}                                <input type="hidden" value="{{ name }}" name="student_name"></td>
+                    </tr>
+                    <tr>
+                        <td><label for="cca_name">CCA Name</label></td>
+                        <td>
+                            <select name="cca_name" id="cca_name">
+                                {% for cca in cca_list %}
+                                <option value="{{cca}}">{{cca}}</option>
+                                {% endfor %}
+                            </select>
+                        </td>
+                    </tr>
+                <tr>
+                <td>
+                    <td>
+                        <input type="submit" value="submit"/>
+                    </td>
+                </td>
+                </tr>
+                </table>
+            </form>
+        {% endif %}
+
         {% if page_type =='delete_student_activity_empty' %}
         <div class="container">
             <p>Delete A Student Record</p>
             <p>Please enter name of student you want to delete the record</p>
-            {{error}}
+            <span class="error">{{error}}</span>
             
             <form 
                 action="{{form_meta['action']}}",
@@ -98,6 +129,37 @@
         </div>
         {% endif %}
 
+        {% if page_type =='delete_student_activity_choose' %}
+        <div class="container">
+            <p>Please choose the activity that you want to remove the student's membership from</p>
+            <form 
+                action="{{form_meta['action']}}"
+                method="{{form_meta['method']}}">
+                <table>
+                    <tr>
+                        <td>Name:</td><td>{{name}}                                <input type="hidden" value="{{ name }}" name="student_name"></td>
+                    </tr>
+                    <tr>
+                        <td><label for="activity_name">Activity Name</label></td>
+                        <td>
+                            <select name="activity_name" id="activity_name">
+                                {% for activity in activity_list %}
+                                <option value="{{activity}}">{{activity}}</option>
+                                {% endfor %}
+                            </select>
+                        </td>
+                    </tr>
+                <tr>
+                <td>
+                    <td>
+                        <input type="submit" value="submit"/>
+                    </td>
+                </td>
+                </tr>
+                </table>
+            </form>
+        {% endif %}
+
         {% if page_type =='delete_student_activity_success' %}
         <div class="container">
             <ul>
@@ -111,7 +173,7 @@
         <div class="container">
             <p>Delete A CCA</p>
             <p>Please enter name of CCA you want to delete</p>
-            {{error}}
+            <span class="error">{{error}}</span>
             
             <form 
                 action="{{form_meta['action']}}",
@@ -127,6 +189,7 @@
                     value="{{value}}"/>
                 {% endfor %}
                 <input type="submit" value="Submit"/>
+            </form>
         </div>
         {% endif %}
 
@@ -143,7 +206,7 @@
         <div class="container">
             <p>Delete an Activity Record</p>
             <p>Please enter name of Activity you want to delete</p>
-            {{error}}
+            <span class="error">{{error}}</span>
             
             <form 
                 action="{{form_meta['action']}}",
@@ -159,6 +222,7 @@
                     value="{{value}}"/>
                 {% endfor %}
                 <input type="submit" value="Submit"/>
+            </form>
         </div>
         {% endif %}
 

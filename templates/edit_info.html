@@ -15,7 +15,7 @@
                 <span class="highlight-blue">Edit a Student Record</span>
                 <br/><br/>
                 <span class="instructions">Use the following form to edit a Student Record</span>
-                <br/>{{error}}
+                <br/><span class="error">{{error}}</span>
 
                 <br/><br/>
                 <form 
@@ -31,11 +31,15 @@
 
         {% if page_type=="edit_student_details" %}
             <div class="container">
+                {% if error=="class_not_exist" %}
+                    <p class="error">
+                        New class provided does not exist!
+                    </p>
+                {% endif %}
                 <span class="highlight-blue">Update a Student Record</span>
                 <br/><br/>
                 <span class="instructions">Use the following form to update a Student Record</span>
                 <br/><br/>
-
                 <form 
                     action="{{ form_meta['action'] }}"
                     method="{{ form_meta['method'] }}">
@@ -87,6 +91,9 @@
 
         {% if page_type=="edit_membership_empty" %}
             <div class="container">
+                {% if error == "student_not_found" %}
+                    <p class="error">Student does not exists! or Student has no CCA records to edit</p>
+                {% endif %}
                 <span class="highlight-blue">Edit a Student CCA Record</span>
                 <br/><br/>
                 <span class="instructions">Use the following form to edit a Student Record</span>
@@ -104,14 +111,14 @@
         {% endif %}
 
         {% if page_type == 'edit_membership_choose' %}
-        <div class="container">
+        <div class="container">           
             <p>Name: {{name}}</p><br/>
             Class: {{class_}}
 
             <p>Please click on the cca you want to edit</p>
             <ol>
                 {% for cca in record %}
-                <li><a href="/edit_membership?cca={{ cca }}&name={{ name }}">{{cca}}</li> <!-- so that when the page changes to page 3, we can carry over the cca name that the user wants to change, as well as their name--> 
+                <li><a href="/edit_membership?cca={{ cca.replace(' ', '+') }}&name={{ name.replace(' ', '+') }}">{{cca}}</li> <!-- so that when the page changes to page 3, we can carry over the cca name that the user wants to change, as well as their name--> 
                 <!-- it works through the request.args. So the args would be a dictionary, something like {"cca": "comp", "name" = "xy"} -->
                 {% endfor %}
             </ol>
@@ -124,52 +131,61 @@
                 <br/><br/>
                 <span class="instructions">Use the following form to update a Student CCA Record</span>
                 <br/><br/>
-
-        <form 
-            action= "{{form_meta['action']}}"
-            method="{{form_meta['method']}}">
-
-            <table>
-                <tr>
-                    <td>
-                        Student Name:
-                    </td>
-                    <td>
-                        {{ form_data["student_name"] }}
-                        <input type="hidden" value={{ form_data["student_name"] }} name="student_name">
-                    </td>
-                </tr>
-                
-                <tr>
-                    <td>
-                        <label for="student_cca"> CCA:
-                    </td>
-                    <td>
-                        <input id="student_cca" type="text" value={{ form_data["student_cca"] }} name="student_cca">
-                    </td>
-                </tr>
-                
-                <tr>
-                <td>
-                    <label for="student_role">Student Role:</label>
-                </td>
-
-                <td>
-                    <select name="student_role" id="student_role">
-                      <option value="Member">Member</option>
-                      <option value="Exco">Exco</option>
-                      <!-- <option value="mercedes">Mercedes</option>
-                      <option value="audi">Audi</option> -->
-                    </select>
-                </td>
-                </tr>
-                <td>
-                    <td>
-                        <input type="submit" value="Submit"/>
-                    </td>
-                </td>
-            </table>
-        </form>
+                <p class="error">
+                    {% if error=="new_cca_not_exist"%}
+                        New cca provided is not registered yet!
+                    {% endif %}
+                    
+                    {% if error=="no_changes_were_made"%}
+                        No changes were made!
+                    {% endif %}
+                </p>
+                <form 
+                    action= "{{form_meta['action']}}"
+                    method="{{form_meta['method']}}">
+        
+                    <table>
+                        <tr>
+                            <td>
+                                Student Name:
+                            </td>
+                            <td>
+                                {{ form_data["student_name"] }}
+                                <input type="hidden" value="{{ form_data['student_name'] }}" name="student_name">
+                            </td>
+                        </tr>
+                        
+                        <tr>
+                            <td>
+                                <label for="student_cca"> CCA:
+                            </td>
+                            <td>
+                                <input id="student_cca" type="text" value="{{ form_data['student_cca'] }}" name="student_cca">
+                                <input type="hidden" value="{{ form_data['student_cca'] }}" name="pre_student_cca">
+                            </td>
+                        </tr>
+                        
+                        <tr>
+                        <td>
+                            <label for="student_role">Student Role:</label>
+                        </td>
+        
+                        <td>
+                            <select name="student_role" id="student_role">
+                              <option value="Member">Member</option>
+                              <option value="Exco">Exco</option>
+                              <!-- <option value="mercedes">Mercedes</option>
+                              <option value="audi">Audi</option> -->
+                            </select>
+                        </td>
+                        </tr>
+                        <td>
+                            <td>
+                                <input type="submit" value="Submit"/>
+                            </td>
+                        </td>
+                    </table>
+                </form>
                     
             </div>
         
@@ -188,6 +204,9 @@
         
         {% if page_type=="edit_participation_empty" %}
             <div class="container">
+                {% if error == "student_not_found" %}
+                    <p class="error">Student does not exists! or Student has no activity records to edit</p>
+                {% endif %}
                 <span class="highlight-blue">Edit a Student activity Record</span>
                 <br/><br/>
                 <span class="instructions">Use the following form to edit a Student Record</span>
@@ -212,7 +231,12 @@
             <p>Please click on the activity you want to edit</p>
             <ol>
                 {% for activity in record %}
-                <li><a href="/edit_participation?activity={{ activity }}&name={{ name }}">{{activity}}</li> <!-- so that when the page changes to page 3, we can carry over the cca name that the user wants to change, as well as their name--> 
+                <li>
+                    <a href="/edit_participation?student_activity={{ activity['activity name'] }}&student_name={{ name }}&student_role={{ activity['role'] }}&student_award={{ activity['award'] }}&student_hours={{ activity['hours'] }}">
+                        {{ activity['activity name'] }}
+                    </a>
+                </li> 
+                <!-- so that when the page changes to page 3, we can carry over the activity name that the user wants to change, as well as their name--> 
                 <!-- it works through the request.args. So the args would be a dictionary, something like {"cca": "comp", "name" = "xy"} -->
                 {% endfor %}
             </ol>
@@ -226,58 +250,76 @@
                 <span class="instructions">Use the following form to update a Student Activity Record</span>
                 <br/><br/>
 
-        <form 
-            action= "{{form_meta['action']}}"
-            method="{{form_meta['method']}}">
+                <p class="error">
+                    {% if error=="new_activity_not_exist" %}
+                        New activity provided is not registered yet!
+                    {% endif %}
 
-            <table>
-                <tr>
-                    <td>
-                        Student Name:
-                    </td>
-                    <td>
-                        {{ form_data["student_name"] }}
-                        <input type="hidden" value={{ form_data["student_name"] }} name="student_name">
-                    </td>
-                </tr>
-                
-                <tr>
-                    <td>
-                        <label for="student_activity"> Activity:
-                    </td>
-                    <td>
-                        <input id="student_activity" type="text" value={{ form_data["student_activity"] }} name="student_activity">
-                    </td>
-                </tr>
-                
-                <td>
-                    <label for="activity_cat">Activity Category:</label>
-                </td>
-                <td>
-                    <select name="activity_cat" id="activity_cat">
-                      <option value="Achievement">Achievement</option>
-                      <option value="Enrichment">Enrichment</option>
-                      <option value="Leadership">Leadership</option>
-                      <option value="Service">Service</option>
-                    </select>
-                </td>
-                </tr>
-                <tr>
-                    <td><label for="activity_sd">Start Date:</label></td>
-                    <td><input type="date" id="activity_sd" name="activity_sd"/>
-</td>
-                </tr>
-                <tr>
-                    <td><label for="activity_ed">End Date:</label></td>
-                    <td><input type="date" id="activity_ed" name="activity_ed"/></td>
-                </tr>
-                <td>
-                    <td>
-                        <input type="submit" value="Submit"/>
-                    </td>
-                </td>
-            </table>
-        </form>
+                    {% if error=="no_changes_were_made" %}
+                        No changes were made!
+                    {% endif %}
+                </p>
+                <form 
+                    action= "{{form_meta['action']}}"
+                    method="{{form_meta['method']}}">
+        
+                    <table>
+                        <tr>
+                            <td>
+                                Student Name:
+                            </td>
+                            <td>
+                                {{ form_data["student_name"] }}
+                                <input type="hidden" value="{{ form_data['student_name'] }}" name="student_name">
+                            </td>
+                        </tr>
+                        
+                        <tr>
+                            <td>
+                                <label for="student_activity"> Activity:
+                            </td>
+                            <td>
+                                <input id="student_activity" type="text" value="{{ form_data['student_activity'] }}" name="student_activity">
+                                <input type="hidden" value="{{ form_data['student_activity'] }}" name="pre_student_activity">
+                            </td>
+                        </tr>
+                        <!-- new row -->
+                        <tr>
+                            <td>
+                                <label for="student_role"> Role:
+                            </td>
+                            <td>
+                                <input id="student_role" type="text" value="{{ form_data['student_role'] }}" name="student_role">
+                            </td>
+                        </tr>
+                        <!-- new row -->
+                        <tr>
+                            <td>
+                                <label for="student_award"> Award:
+                            </td>
+                            <td>
+                                <input id="student_award" type="text" value="{{ form_data['student_award'] }}" name="student_award">
+                            </td>
+                        </tr>
+                        <!-- new row -->
+                        <tr>
+                            <td>
+                                <label for="student_hours"> Hours:
+                            </td>
+                            <td>
+                                <input id="student_hours" type="text" value="{{ form_data['student_hours'] }}" name="student_hours">
+                            </td>
+                        </tr>
+                         <!-- new row -->
+                        <td>
+                            <td>
+                            <input type="submit" value="Submit"/>
+                            </td>
+                        </td>
+                        
+                        
+                    </table>
+                </form>
                     
             </div>
         

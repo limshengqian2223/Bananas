@@ -12,6 +12,14 @@
     padding:10px
 }
 
+.error{
+    color: red;
+}
+
+.clear{
+    color: green;
+}
+
 table, tr, td{
     border:1px solid black;
 }

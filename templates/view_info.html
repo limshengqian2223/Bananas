@@ -10,93 +10,244 @@
     {% include 'header.html' %}
 
     <body>
-        {% if page_type=='view_cca' %}
-        <div class="container">
-            <p>Enter Name of student to search for related CCA(s)</p>
-            <form 
-                action="{{form_meta['action']}}",
-                method="{{form_meta['method']}}">
-
+        {% if page_type=='find_student_profile' %}
+            <div class="container">
+            <p>Enter name of a student to search for his/her profile</p>
+            
+            {% if error=='student_not_found' %}
+                <p style="color: red;"> Student not found! (No student record with provided name has been found in our systems.)</p>
+            {% endif %}
+            
+            <form action="{{ form_meta['action'] }}", method="{{ form_meta['method'] }}">
                 {% for name, value in form_data.items() %}
-
-                <label for="{{name}}">
-                    {{name.replace('_',' ').title()}}:</label>
-                <input id="{{name}}"
-                    type="text"
-                    name="{{name}}"
-                    value="{{value}}"/>
+                    <label for="{{ name }}"> {{ name.replace('_', ' ').title() }}: </label>
+                    <input id="{{ name }}" type="text" name="{{ name }}"/>
                 {% endfor %}
                 <input type="submit" value="Submit"/>
-        </div>
+            </form>
+            
+            </div>
         {% endif %}
 
-        {% if page_type =="view_cca_info" %}
-        <div class="container">
-            <p>Below is the list of CCAs the student is a member of</p>
-            </br>Name: {{name}}</br>Class:{{class_}}</br>
-        <table>
-            <tr>
-                <td>CCA Name</td><td>Role</td>
-            </tr>
-            {% for cca in cca_record %}
-            {% for role in role_record %}
-                <tr>
-                    <td>{{cca.title()}}</td><td>{{role.title()}}</td>
-                </tr>
-            {% endfor %}
-            {% endfor %}
-        </table>
-        </div>
+        {% if page_type=='show_student_profile' %}
+            <div class="container">
+                <p>Student Profile</p>
+                <table border="1" style='border-collapse:collapse'>
+                    <tr>
+                        <td>Student Name</td><td>{{ student_record["name"] }}</td>
+                    </tr>
+                    <tr>
+                        <td>Age</td><td>{{ student_record["age"] }}</td>
+                    </tr>
+                    <tr>
+                        <td>class</td><td><a href="/view_by_class?class_name={{ student_record['class'] }}">{{ student_record["class"] }}</a></td>
+                    </tr>
+                    <tr>
+                        <td>year enrolled</td><td>{{ student_record["year enrolled"] }}</td>
+                    </tr>
+                    <tr>
+                        <td>graduating year</td><td>{{ student_record["graduating year"] }}</td>
+                    </tr>
+                </table>
+                
+                <br>
+                
+                <p>CCAs</p>
+                <table border="1" style='border-collapse:collapse'>
+                    <tr>
+                        <td> CCA Name </td>
+                        <td> CCA Role </td>
+                    </tr>
+                    {% if student_cca_record != None %}
+                        {% for record in student_cca_record %}
+                            <tr>
+                                <td><a href="/view_by_cca?cca_name={{ record['cca name'] }}">{{ record["cca name"] }}</a></td>
+                                <td>{{ record["role"] }} </td>
+                            </tr>
+                        {% endfor %}
+                    {% endif %}
+                </table>
+
+                <br>
+
+                <p>Activities</p>
+                <table border="1" style='border-collapse:collapse'>
+                    <tr>
+                        <td>Activity Name</td>
+                        <td>Award</td>
+                        <td>Hour(s)</td>
+                        <td>Role</td>
+                    </tr>
+                    {% if student_activity_record != None %}
+                        {% for record in student_activity_record %}
+                        <tr>
+                            <td><a href="/view_by_activity?activity_name=capstone">{{ record["activity name"] }}</a></td>
+                            <td>{{ record["award"] }} </td>
+                            <td>{{ record["hours"] }}</td>
+                            <td>{{ record["role"] }}</td>
+                        </tr>
+                        {% endfor %}
+                    {% endif %}
+                </table>
+            </div>
         {% endif %}
 
-        {% if page_type=='view_activity' %}
-        <div class="container">
-            <p>Enter Name of student to search for related Activity/Activities</p>
-            <form 
-                action="{{form_meta['action']}}",
-                method="{{form_meta['method']}}">
-
+        {% if page_type=='find_class_profile' %}
+            <div class="container">
+            <p>Enter name of a class to search for all the students in the class</p>
+            
+            {% if error=='class_not_found' %}
+                <p class="error"> Class not found! (No class record with provided class has been found in our systems.)</p>
+            {% endif %}
+            
+            <form action="{{ form_meta['action'] }}", method="{{ form_meta['method'] }}">
                 {% for name, value in form_data.items() %}
-
-                <label for="{{name}}">
-                    {{name.replace('_',' ').title()}}:</label>
-                <input id="{{name}}"
-                    type="text"
-                    name="{{name}}"
-                    value="{{value}}"/>
+                    <label for="{{ name }}"> {{ name.replace('_', ' ').title() }}: </label>
+                    <input id="{{ name }}" type="text" name="{{ name }}"/>
                 {% endfor %}
                 <input type="submit" value="Submit"/>
+            </form>
+            
+            </div>
+        {% endif %}
+
+        {% if page_type=="show_class_profile" %}
+        <div class="container">
+            <table border="1" style='border-collapse:collapse'>
+                <tr>
+                    <td>Student Name</td>
+                    <td>Class</td>
+                    <td>Age</td>
+                </tr>
+                {% for student_record in list_of_students %}
+                    <tr>
+                        <td><a href="/view_student_profile?student_name={{ student_record['student name'] }}">{{ student_record["student name"] }}</a></td>
+                        <td>{{ student_record["class"] }}</td>
+                        <td>{{ student_record["student age"] }}</td>
+                    </tr>
+                {% endfor %}
+            </table>
+        </div>
+        {% endif %}
+        
+        {% if page_type=='find_cca_profile' %}
+        <div class="container">
+            <p>Enter name of a CCA to search for information about the CCA</p>
+
+            {% if error=='cca_not_found' %}
+                <p style="color: red;"> CCA not found! (No CCA record with provided CCA name has been found in our systems.)</p>
+            {% endif %}
+            
+            <form action="{{form_meta['action']}}", method="{{form_meta['method']}}">
+                {% for field_name, value in form_data.items() %}
+                <label for="{{ field_name }}">
+                    {{ field_name.replace('_',' ').title() }}:</label>
+                <input id="{{ field_name }}"
+                    type="text"
+                    name="{{ field_name }}">
+                {% endfor %}
+                
+                <input type="submit" value="Submit"/>
+            </form>
         </div>
         {% endif %}
 
-        {% if page_type =="view_activity_info" %}
+        {% if page_type =="show_cca_profile" %}
+        
         <div class="container">
-            <p>Below is the list of CCAs the student is a member of</p>
-            </br>Name: {{name}}</br>Class:{{class_}}</br>
-        <table>
-            <tr>
-                <td>Activity Name</td>
-                <td>Role</td>
-                <td>Award</td>
-                <td>Hours</td>
-            </tr>
-            {% for cca in cca_record %}
-            {% for role in role_record %}
-            {% for award in award_record %}
-            {% for hours in hours_record %}
+            <p>CCA info</p>
+            <table border="1" style='border-collapse:collapse'>
                 <tr>
-                    <td>{{cca.title()}}</td>
-                    <td>{{role.title()}}</td>
-                    <td>{{award.title()}}</td>
-                    <td>{{hours.title()}}</td>
+                    <td>CCA Name</td>
+                    <td>{{ cca_info["name"] }}</td>
                 </tr>
-            {% endfor %}
-            {% endfor %}
-            {% endfor %}
-            {% endfor %}
-        </table>
+                <tr>
+                    <td>
+                        Type
+                    </td>
+                    <td>
+                        {{ cca_info["type"] }}
+                    </td>
+                </tr>
+            </table>
+
+            <br>
+            <p>List of Members</p>
+            <table border="1" style='border-collapse:collapse'>
+                <tr>
+                    <td>Member names</td>
+                </tr>
+                {% if list_of_members != None %}
+                    {% for record in list_of_members %}
+                    <tr>
+                        <td>
+                            <a href="/view_student_profile?student_name={{ record["student name"] }}">{{ record["student name"] }}</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                {% endif %}
+            </table>
         </div>
         {% endif %}
-    
+
+        {% if page_type=='find_activity_profile' %}
+        <div class="container">
+            <p>Enter name of an activity to search for information about the Activity</p>
+
+            {% if error=='activity_not_found' %}
+                <p style="color: red;"> Activity not found! (No Activity record with provided Activity name has been found in our systems.)</p>
+            {% endif %}
+            
+            <form action="{{form_meta['action']}}", method="{{form_meta['method']}}">
+                {% for field_name, value in form_data.items() %}
+                <label for="{{ field_name }}">
+                    {{ field_name.replace('_',' ').title() }}:</label>
+                <input id="{{ field_name }}"
+                    type="text"
+                    name="{{ field_name }}">
+                {% endfor %}
+                
+                <input type="submit" value="Submit"/>
+            </form>
+        </div>
+        {% endif %}
+
+        {% if page_type =="show_activity_profile" %}
+        
+        <div class="container">
+            <p>Activity info</p>
+            <table border="1" style='border-collapse:collapse'>
+                <tr>
+                    <td>Activity Name</td>
+                    <td>{{ activity_info["name"] }}</td>
+                </tr>
+                <tr>
+                    <td>
+                        Type
+                    </td>
+                    <td>
+                        {{ activity_info["category"] }}
+                    </td>
+                </tr>
+            </table>
+
+            <br>
+            <p>List of participants</p>
+            <table border="1" style='border-collapse:collapse'>
+                <tr>
+                    <td>Participant names</td>
+                </tr>
+                {% if list_of_members != None %}
+                    {% for record in list_of_members %}
+                    <tr>
+                        <td>
+                            <a href="/view_student_profile?student_name={{ record["student name"] }}">{{ record["student name"] }}</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                {% endif %}
+            </table>
+        </div>
+        {% endif %}
     </body>
 </html>
