@@ -36,6 +36,19 @@
                     </td>
                 </tr>
                 {% endfor %}
+                <tr>
+                    <td>
+                        <label for="student_class">Student Class</label>
+                    </td>
+
+                    <td>
+                        <select name="student_class" id="student_class">
+                            {% for class_ in class_list %}
+                            <option value="{{class_}}">{{class_}}</option>
+                            {% endfor %}
+                        </select>
+                    </td>
+                </tr>
 
                 <td>
                     <td>
@@ -61,7 +74,7 @@
 
     {% if page_type=='insert_student_fail' %}
     <div class='container'>
-        <p>The following student already exists!</p>
+        <p class="error">The following student already exists!</p>
 
         {% for name, value in student_info.items() %}
         {{ name.replace('_', " ").title()}}:{{value}}
@@ -105,6 +118,8 @@
                     <select name="student_role" id="student_role">
                       <option value="Member">Member</option>
                       <option value="Exco">Exco</option>
+                      <option value="President">President</option>
+                      <option value="Vice President">Vice President</option>
                       <!-- <option value="mercedes">Mercedes</option>
                       <option value="audi">Audi</option> -->
                     </select>
@@ -134,7 +149,18 @@
 
     {% if page_type=='insert_student_cca_fail' %}
     <div class='container'>
-        <p>The following student already exists!</p>
+        {% if error == "student_not_exist" %}
+        <p class="error">Student not found! (No student record with provided name has been found in our systems.)</p>
+        {% endif %}
+
+        {% if error == "cca_not_exist" %}
+        <p class="error">CCA not found! (No CCA record with provided CCA name has been found in our systems.)</p>
+        {% endif %}
+
+        {% if error == "student_alr_in_cca" %}
+        <p class="error">This student is already registered in the CCA!</p>
+        {% endif %}
+        
 
         {% for name, value in student_info.items() %}
         {{ name.replace('_', " ").title()}}:{{value}}
@@ -192,10 +218,20 @@
     </div>
     {% endif %}
 
-    {% if page_type=="insert_activity_fail" %}
+    {% if page_type=="insert_student_activity_fail" %}
     <div class='container'>
-        <p>The following student has already registered for this Activity!</p>
+        {% if error == "student_not_exist" %}
+        <p class="error"> Student not found! (No student record with provided name has been found in our systems.)</p>
+        {% endif %}
 
+        {% if error == "activity_not_exist" %}
+        <p class="error">Activity not found! (No activity record with provided activity name has been found in our systems.)</p>
+        {% endif %}
+
+        {% if error == "student_alr_in_activity" %}
+        <p class="error">This student is already registered in the activity!</p>
+        {% endif %}
+        
         {% for name, value in student_info.items() %}
         {{ name.replace('_', " ").title()}}:{{value}}
     </br>
