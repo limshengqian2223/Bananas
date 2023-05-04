@@ -33,18 +33,21 @@
             <div class="container">
                 <p>Student Profile</p>
                 <table border="1" style='border-collapse:collapse'>
-                    {% for field_name, value in student_record.items() %}
-                    
-                        <tr>
-                            <td>
-                                {{ field_name }}
-                            </td>
-                            <td>
-                                {{ value }}
-                            </td>
-                        </tr>
-                        
-                    {% endfor %}
+                    <tr>
+                        <td>Student Name</td><td>{{ student_record["name"] }}</td>
+                    </tr>
+                    <tr>
+                        <td>Age</td><td>{{ student_record["age"] }}</td>
+                    </tr>
+                    <tr>
+                        <td>class</td><td><a href="/view_by_class?class_name={{ student_record['class'] }}">{{ student_record["class"] }}</a></td>
+                    </tr>
+                    <tr>
+                        <td>year enrolled</td><td>{{ student_record["year enrolled"] }}</td>
+                    </tr>
+                    <tr>
+                        <td>graduating year</td><td>{{ student_record["graduating year"] }}</td>
+                    </tr>
                 </table>
                 
                 <br>
@@ -78,7 +81,8 @@
                     {% if student_activity_record != None %}
                         {% for record in student_activity_record %}
                         <tr>
-                            <td>{{ record["activity name"] }}</td>
+
+                            <td><a href="/view_by_activity?activity_name=capstone">{{ record["activity name"] }}</a></td>
                             <td>{{ record["award"] }} </td>
                             <td>{{ record["hours"] }}</td>
                             <td>{{ record["role"] }}</td>
@@ -94,7 +98,9 @@
             <p>Enter name of a class to search for all the students in the class</p>
             
             {% if error=='class_not_found' %}
-                <p style="color: red;"> Class not found! (No class record with provided class has been found in our systems.)</p>
+
+                <p class="error"> Class not found! (No class record with provided class has been found in our systems.)</p>
+
             {% endif %}
             
             <form action="{{ form_meta['action'] }}", method="{{ form_meta['method'] }}">
@@ -187,24 +193,65 @@
         </div>
         {% endif %}
 
-        <!-- {% if page_type=='view_activity' %}
+        {% if page_type=='find_activity_profile' %}
+
         <div class="container">
-            <p>Enter Name of student to search for related Activity/Activities</p>
-            <form 
-                action="{{form_meta['action']}}",
-                method="{{form_meta['method']}}">
+            <p>Enter name of an activity to search for information about the Activity</p>
 
-                {% for name, value in form_data.items() %}
-
-                <label for="{{name}}">
-                    {{name.replace('_',' ').title()}}:</label>
-                <input id="{{name}}"
+            {% if error=='activity_not_found' %}
+                <p style="color: red;"> Activity not found! (No Activity record with provided Activity name has been found in our systems.)</p>
+            {% endif %}
+            
+            <form action="{{form_meta['action']}}", method="{{form_meta['method']}}">
+                {% for field_name, value in form_data.items() %}
+                <label for="{{ field_name }}">
+                    {{ field_name.replace('_',' ').title() }}:</label>
+                <input id="{{ field_name }}"
                     type="text"
-                    name="{{name}}"
-                    value="{{value}}"/>
+                    name="{{ field_name }}">
                 {% endfor %}
+                
                 <input type="submit" value="Submit"/>
+            </form>
         </div>
-        {% endif %} -->
+        {% endif %}
+
+        {% if page_type =="show_activity_profile" %}
+        
+        <div class="container">
+            <p>Activity info</p>
+            <table border="1" style='border-collapse:collapse'>
+                <tr>
+                    <td>Activity Name</td>
+                    <td>{{ activity_info["name"] }}</td>
+                </tr>
+                <tr>
+                    <td>
+                        Type
+                    </td>
+                    <td>
+                        {{ activity_info["category"] }}
+                    </td>
+                </tr>
+            </table>
+
+            <br>
+            <p>List of participants</p>
+            <table border="1" style='border-collapse:collapse'>
+                <tr>
+                    <td>Participant names</td>
+                </tr>
+                {% if list_of_members != None %}
+                    {% for record in list_of_members %}
+                    <tr>
+                        <td>
+                            <a href="/view_student_profile?student_name={{ record["student name"] }}">{{ record["student name"] }}</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                {% endif %}
+            </table>
+        </div>
+        {% endif %}
     </body>
 </html>
