@@ -74,8 +74,13 @@
 
     {% if page_type=='insert_student_fail' %}
     <div class='container'>
-        <p class="error">The following student already exists!</p>
-
+        <p class="error">{{error}}</p>
+        {% if empty_fields %}
+            {% for empty_field in empty_fields %}
+        <p class='error'>{{empty_field.replace('_',' ').title()}} is empty!</p>
+            {% endfor %}
+        {% endif %}
+        
         {% for name, value in student_info.items() %}
         {{ name.replace('_', " ").title()}}:{{value}}
     </br>
@@ -114,15 +119,16 @@
                     <label for="student_role">Student Role:</label>
                 </td>
 
-                <td>
+                <!-- <td>
                     <select name="student_role" id="student_role">
                       <option value="Member">Member</option>
                       <option value="Exco">Exco</option>
                       <option value="President">President</option>
                       <option value="Vice President">Vice President</option>
-                      <!-- <option value="mercedes">Mercedes</option>
-                      <option value="audi">Audi</option> -->
                     </select>
+                </td> -->
+                <td>
+                    <input id="student_role" type="text" name="student_role">
                 </td>
                 </tr>
                 <td>
@@ -149,6 +155,16 @@
 
     {% if page_type=='insert_student_cca_fail' %}
     <div class='container'>
+        
+        {% if error == 'empty_fields' %}
+        <p class='error'>There are empty fields</p>
+        {% if empty_fields %}
+            {% for empty_field in empty_fields %}
+        <p class='error'>{{empty_field.replace('_',' ').title()}} is empty!</p>
+            {% endfor %}
+        {% endif %}
+        {% endif %}
+        
         {% if error == "student_not_exist" %}
         <p class="error">Student not found! (No student record with provided name has been found in our systems.)</p>
         {% endif %}
@@ -220,6 +236,16 @@
 
     {% if page_type=="insert_student_activity_fail" %}
     <div class='container'>
+
+        {% if error == 'empty_fields' %}
+        <p class='error'>There are empty fields</p>
+        {% if empty_fields %}
+            {% for empty_field in empty_fields %}
+        <p class='error'>{{empty_field.replace('_',' ').title()}} is empty!</p>
+            {% endfor %}
+        {% endif %}
+        {% endif %}
+
         {% if error == "student_not_exist" %}
         <p class="error"> Student not found! (No student record with provided name has been found in our systems.)</p>
         {% endif %}

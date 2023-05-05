@@ -92,7 +92,7 @@ class StudentCollection(Collection):
         returns None if record not found
         """
 
-        find_by_name = f'''
+        find_by_name = '''
                 SELECT
                 "student"."id" AS "id",
                 "student"."name" AS "name",
@@ -143,7 +143,7 @@ class StudentCollection(Collection):
         Takes in dictionary containing student's name, age, class, year_enrolled, grad_year
 
         record = {"student_name": str,
-                   "student_age": str,
+                   "student_age": int,
                    "student_class": int,
                    "student_year_enrolled": int,
                    "student_grad_year": int}
@@ -156,7 +156,19 @@ class StudentCollection(Collection):
         
         (done) Next step(0): Raise error when something unexpected occurs (perhaps wrong data type for age)
         Next step(1): Looks like data validation is necessary.
-        """
+        """        
+        error_msg = ""
+        if type(record['student_age'] != int):
+            error_msg += "age_wrong_type"
+            
+        if type(record['student_year_enrolled'] != int): 
+            error_msg += "year_enrolled_wrong_type"
+            
+        if type(record['student_grad_year'] != int):
+            error_msg += "grad_year_wrong_type"
+
+        if error_msg != "":
+            return False
 
         if self.find_by_name(record["student_name"]
                              ) is not None:  # Student name already exists
