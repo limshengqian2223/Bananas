@@ -168,20 +168,32 @@
         {% if error == 'already_exist' %}
         <p class="error">The following Activity already exists!</p>
         {% endif %}
+
+        {% if error == 'cca_not_exist' %}
+            <p class="error">The organising CCA does not exist!</p>
+        {% endif %}
         
         {% if error == 'empty_fields' %}
-        <p class='error'>There are empty fields</p>
-        {% if empty_fields %}
-            {% for empty_field in empty_fields %}
-        <p class='error'>{{empty_field.replace('_',' ').title()}} is empty!</p>
-            {% endfor %}
-        {% endif %}
+            <p class='error'>There are empty fields !</p>
+                {% for empty_field in empty_fields %}
+        
+                    {% if empty_field=="activity_desc" %}
+                        <p class='error'>Activity Description is empty!</p>
+
+                    {% elif empty_field=="activity_sd" %}
+                        <p class='error'>Activity Start Date is empty!</p>
+                    {% elif empty_field=="activity_ed" %}
+                        <p class='error'>Activity End Date is empty!</p>
+                    {% else %}
+                        <p class='error'>{{empty_field.replace('_',' ').title()}} is empty!</p>
+                    {% endif %}
+                {% endfor %}
         {% endif %}
 
         
 
         {% for name, value in activity.items() %}
-        {{ name.replace('_', " ").title()}}:{{value}}
+            {{ name.replace('_', " ").title() }}:{{ value }}
     </br>
         {% endfor %}
         <button type='button' onclick="history.go(-1)"> Edit </button>

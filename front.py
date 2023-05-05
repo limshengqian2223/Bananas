@@ -1,6 +1,6 @@
 from flask import Flask, render_template, request
 from storage import *
-from helper_function import empty_fields
+from helper_function import empty_fields, type_converter
 #balls
 #import from storage next time
 
@@ -22,7 +22,6 @@ class_list = [
         '2325', '2326', '2327', '2328', '2329', '2330'
     ]
 
-
 @app.route('/')
 def index():
     """
@@ -38,33 +37,48 @@ def new_student():
     Require: None
     Pass to DB: name, age. year enroll, grad year, class, student_subject (seperate table) (Inserting by DB)
     """
-    list_empty_fields= None
+    list_empty_fields = None
+    list_wrong_fields = None
     if "registered" in request.args:
         record = dict(request.form)
-        # print(record) 
-
+        
         list_empty_fields = empty_fields(record)
         if list_empty_fields:
+            # template returned when there are empty fields
             return render_template('student_info.html',
                                    page_type='insert_student_fail',
                                    student_info=record,
                                    title="Add New Student - Fail",
                                    error='There are empty fields',
-                                   empty_fields=list_empty_fields)
+                                   empty_fields=list_empty_fields,
+                                  wrong_fields=list_wrong_fields)
+        list_wrong_fields = type_converter(record)
         
-        
+        if list_wrong_fields:
+            # template returned when there are fields with wrong data types
+            return render_template('student_info.html',
+                                   page_type='insert_student_fail',
+                                   student_info=record,
+                                   title="Add New Student - Fail",
+                                   error='There are wrong fields',
+                                   empty_fields=list_empty_fields,
+                                  wrong_fields=list_wrong_fields)
         if sc.insert(record):
+            # all clear
             del record['class_id']
             return render_template('student_info.html',
                                    page_type='confirmed_student',
                                    student_info=record,
                                    title='Add New Student - Success')
         else:
+            # student already exists
             return render_template('student_info.html',
                                    page_type='insert_student_fail',
                                    student_info=record,
                                    title="Add New Student - Fail",
-                                  error="Student Already Exists!")
+                                  error="Student Already Exists!",
+                                  empty_fields=list_empty_fields,
+                                  wrong_fields=list_wrong_fields)
 
     return render_template('student_info.html',
                            page_type='new_student',
@@ -146,18 +160,6 @@ def new_student_activity():
     if "registered" in request.args:
         record = dict(request.form)
 
-        # student_name = request.form['student_name']
-        # student_activity = request.form['student_activity']
-        # student_role = request.form['student_role']
-        # student_award = request.form['student_award']
-        # student_hours = request.form['student_hours']
-
-        # record = {'student_name':student_name,
-        #          'student_activity':student_activity,
-        #          'student_role':student_role,
-        #          'student_award':student_award,
-        #          'student_hours':student_hours}
-
         list_empty_fields = empty_fields(record)
         if list_empty_fields:
             return render_template('student_info.html',
@@ -166,7 +168,14 @@ def new_student_activity():
                                    title="Add New Student Activity - Fail",
                                    error='empty_fields',
                                    empty_fields=list_empty_fields)
-            
+        list_wrong_type = type_converter(record)
+        if list_wrong_type:
+            return render_template('student_info.html',
+                                   page_type='insert_student_activity_fail',
+                                   student_info=record,
+                                   title="Add New Student Activity - Fail",
+                                   error='wrong_fields',
+                                   wrong_fields=list_wrong_type)
         status, message = sat.insert(record)
         if status:
             del record['student_id']
@@ -257,17 +266,6 @@ def new_activity():
     list_empty_fields = None
     if 'registered' in request.args:
         activity = dict(request.form)
-        # print(activity)
-        # activity_name=request.form['activity_name']
-        # cca_name=request.form['cca_name']
-        # activity_cat=request.form['activity_cat']
-        # activity_sd=9
-        # activity_ed=9
-        # activity_desc=9
-
-        # activity={'activity_name':activity_name,
-        #           'cca_name':cca_name,
-        #           'activity_cat':activity_cat}
 
         list_empty_fields = empty_fields(activity)
         if list_empty_fields:
@@ -277,24 +275,26 @@ def new_activity():
                                    title="Add New Activity - Fail",
                                    error='empty_fields',
                                    empty_fields=list_empty_fields)     
-
+        print(activity)
+        status, message = ac.insert(activity)
+        activity['activity_end_date'] = activity.pop('activity_sd')
+        activity['activity_start_date'] = activity.pop('activity_ed')
+        activity['activity_category'] = activity.pop('activity_cat')
         
-        if ac.insert(activity):
-            activity['activity_end_date'] = activity.pop('activity_sd')
-            activity['activity_start_date'] = activity.pop('activity_ed')
-            activity['activity_category'] = activity.pop('activity_cat')
+        if status:
             del activity['cca_id']
-            del activity["ac"]
+            # del activity["ac"]
             return render_template('new_cca_activity.html',
                                    title='Add Activity - Success',
                                    page_type='new_activity_registered',
                                    activity=activity)
         else:
+            # either activity already exist or organising cca does not exist
             return render_template('new_cca_activity.html',
                                    page_type="add_activity_fail",
                                    activity=activity,
                                    title="Add New Activity - Fail",
-                                  error='already_exist')
+                                  error=message)
 
     return render_template('new_cca_activity.html',
                            title='Add New Activity',
@@ -536,6 +536,8 @@ def edit_student():
 
     Pass to DB :edited student Record (Update by DB)
     """
+    list_wrong_type = None
+    list_empty_fields = None
     if request.method == 'GET':
         return render_template('edit_info.html',
                                page_type='edit_student_empty',
@@ -551,32 +553,12 @@ def edit_student():
             prev_name = record['prev_name']
             del record['prev_name']
 
-            status, message = sc.update(prev_name, record)
-            if status:
-                # all clear
-                # remove unnecessary fields from being displayed
-                del record["student_class_id"]
-                return render_template('edit_info.html',
-                                       page_type='edit_student_success',
-                                       record=record,
-                                       title="Edit Student Record - Success")
-            else:
-                # new class doesnt exist. autofill to previous state
-                # command directly below is to re-obtain the original student class.
-                record["student_class"] = sc.find_by_name(
-                    record["student_name"])["class"]
-                print(record)
-                
-            list_empty_fields = None   
             list_empty_fields = empty_fields(record)
-            if list_empty_fields:          
-                return render_template('student_info.html',
-                                       page_type='edit_student_details',
-                                       student_info=record,
-                                       title="Add New Student - Fail",
-                                       error='empty_fields',
-                                       empty_fields=list_empty_fields)
-                
+            
+            if list_empty_fields:
+                # has empty fields
+                message="empty_records"
+                print(list_empty_fields)
                 return render_template('edit_info.html',
                                        page_type='edit_student_details',
                                        form_meta={
@@ -599,12 +581,81 @@ def edit_student():
                                        prev_name=record["student_name"],
                                        error=message,
                                        class_list=class_list,
-                                       title="Edit Student Details")
+                                       title="Edit Student Details",
+                                      empty_fields=list_empty_fields)
+            list_wrong_type = type_converter(record)
+            if list_wrong_type:
+                message = "wrong_data_type"
+                return render_template('edit_info.html',
+                                       page_type='edit_student_details',
+                                       form_meta={
+                                           'action':
+                                           '/edit_student?registered',
+                                           'method': 'post'
+                                       },
+                                       form_data={
+                                           "student_name":
+                                           record["student_name"],
+                                           "student_class":
+                                           record["student_class"],
+                                           "student_age":
+                                           record["student_age"],
+                                           "student_year_enrolled":
+                                           record["student_year_enrolled"],
+                                           "student_grad_year":
+                                           record["student_grad_year"]
+                                       },
+                                       prev_name=record["student_name"],
+                                       error=message,
+                                       class_list=class_list,
+                                       title="Edit Student Details",
+                                      empty_fields=list_empty_fields,
+                                      wrong_fields=list_wrong_type)
+            
+            status, message = sc.update(prev_name, record)
+            if status:
+                # all clear
+                # remove unnecessary fields from being displayed
+                del record["student_class_id"]
+                return render_template('edit_info.html',
+                                       page_type='edit_student_success',
+                                       record=record,
+                                       title="Edit Student Record - Success")
+            # else:
+            #     # new class doesnt exist. autofill to previous state
+            #     # command directly below is to re-obtain the original student class.
+            #     record["student_class"] = sc.find_by_name(
+            #         record["student_name"])["class"]
+            #     print(record)                
+            #     return render_template('edit_info.html',
+            #                            page_type='edit_student_details',
+            #                            form_meta={
+            #                                'action':
+            #                                '/edit_student?registered',
+            #                                'method': 'post'
+            #                            },
+            #                            form_data={
+            #                                "student_name":
+            #                                record["student_name"],
+            #                                "student_class":
+            #                                record["student_class"],
+            #                                "student_age":
+            #                                record["student_age"],
+            #                                "student_year_enrolled":
+            #                                record["student_year_enrolled"],
+            #                                "student_grad_year":
+            #                                record["student_grad_year"]
+            #                            },
+            #                            prev_name=record["student_name"],
+            #                            error=message,
+            #                            class_list=class_list,
+            #                            title="Edit Student Details")
 
         name = request.form['name']
         if sc.find_by_name(name) is not None:
             
             # student exists
+            # load their existing record
             record = sc.find_by_name(name)
             del record['id']
             return render_template('edit_info.html',
@@ -681,9 +732,28 @@ def edit_membership():
     elif request.method == 'POST':
         if 'registered' in request.args:
             record = dict(request.form)
+
+            list_empty_fields = empty_fields(record)
+            message = "empty_fields"
+            if list_empty_fields:
+                return render_template(
+                    'edit_info.html',
+                    page_type='edit_indiv_membership_details',
+                    form_meta={
+                        'action': '/edit_membership?registered',
+                        'method': 'post'
+                    },
+                    form_data={
+                        'student_name': record['student_name'],
+                        'student_cca': record['pre_student_cca']
+                    },
+                    error=message,
+                    title="Edit Student CCA",
+                empty_fields=list_empty_fields)
+            
             status, message = sct.update(record['student_name'],
                                          record["pre_student_cca"], record)
-
+            
             if status:
                 # all clear
                 # removing unnecessary fields for user.
@@ -780,6 +850,43 @@ def edit_participation():
     elif request.method == 'POST':
         if 'registered' in request.args:
             record = dict(request.form)
+            list_empty_fields = empty_fields(record)
+            
+            if list_empty_fields:
+                # handling update forms with empty fields
+                message = "empty_fields"
+                record["student_activity"] = record["pre_student_activity"]
+                
+                return render_template(
+                    'edit_info.html',
+                    page_type='edit_indiv_participation_details',
+                    form_meta={
+                        'action': '/edit_participation?registered',
+                        'method': 'post'
+                    },
+                    form_data=record,
+                    error=message,
+                    title="Edit Student Participation",
+                empty_fields=list_empty_fields)
+
+            list_wrong_type = type_converter(record)
+            if list_wrong_type:
+                # handling update forms with wrong data type
+                message = "wrong_fields"
+                record["student_activity"] = record["pre_student_activity"]
+                
+                return render_template(
+                    'edit_info.html',
+                    page_type='edit_indiv_participation_details',
+                    form_meta={
+                        'action': '/edit_participation?registered',
+                        'method': 'post'
+                    },
+                    form_data=record,
+                    error=message,
+                    title="Edit Student Participation",
+                wrong_fields=list_wrong_type)
+                
             status, message = sat.update(record['student_name'],
                                          record['pre_student_activity'],
                                          record)

@@ -96,8 +96,10 @@
             <div class="container">
             <p>Enter name of a class to search for all the students in the class</p>
             
-            {% if error=='class_no_records' %}
-                <p class="error"> This class has no records!</p>
+            {% if error=='class_not_found' %}
+
+                <p class="error"> Class not found! (No class record with provided class has been found in our systems.)</p>
+
             {% endif %}
             
             <form action="{{ form_meta['action'] }}", method="{{ form_meta['method'] }}">
@@ -200,6 +202,7 @@
         {% endif %}
 
         {% if page_type=='find_activity_profile' %}
+
         <div class="container">
             <p>Enter name of an activity to search for information about the activity</p>
 
