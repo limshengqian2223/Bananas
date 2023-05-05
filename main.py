@@ -1,5 +1,5 @@
 from flask import Flask
-from front import app
+from front4 import app
 
 import storage
 
@@ -17,3 +17,6 @@ result = sc.find('sq')
 print(result)
 for object in result:
     print(object)
+
+
+print('test')

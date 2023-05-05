@@ -40,13 +40,13 @@
                         <td>Age</td><td>{{ student_record["age"] }}</td>
                     </tr>
                     <tr>
-                        <td>class</td><td><a href="/view_by_class?class_name={{ student_record['class'] }}">{{ student_record["class"] }}</a></td>
+                        <td>Class</td><td><a href="/view_by_class?class_name={{ student_record['class'] }}">{{ student_record["class"] }}</a></td>
                     </tr>
                     <tr>
-                        <td>year enrolled</td><td>{{ student_record["year enrolled"] }}</td>
+                        <td>Year Enrolled</td><td>{{ student_record["year enrolled"] }}</td>
                     </tr>
                     <tr>
-                        <td>graduating year</td><td>{{ student_record["graduating year"] }}</td>
+                        <td>Graduating Year</td><td>{{ student_record["graduating year"] }}</td>
                     </tr>
                 </table>
                 
@@ -81,7 +81,7 @@
                     {% if student_activity_record != None %}
                         {% for record in student_activity_record %}
                         <tr>
-                            <td><a href="/view_by_activity?activity_name=capstone">{{ record["activity name"] }}</a></td>
+                            <td><a href="/view_by_activity?activity_name={{ record['activity name'].replace(' ','+') }}">{{ record["activity name"] }}</a></td>
                             <td>{{ record["award"] }} </td>
                             <td>{{ record["hours"] }}</td>
                             <td>{{ record["role"] }}</td>
@@ -96,16 +96,25 @@
             <div class="container">
             <p>Enter name of a class to search for all the students in the class</p>
             
-            {% if error=='class_not_found' %}
-                <p class="error"> Class not found! (No class record with provided class has been found in our systems.)</p>
+            {% if error=='class_no_records' %}
+                <p class="error"> This class has no records!</p>
             {% endif %}
             
             <form action="{{ form_meta['action'] }}", method="{{ form_meta['method'] }}">
-                {% for name, value in form_data.items() %}
+                <!-- {% for name, value in form_data.items() %}
                     <label for="{{ name }}"> {{ name.replace('_', ' ').title() }}: </label>
                     <input id="{{ name }}" type="text" name="{{ name }}"/>
                 {% endfor %}
-                <input type="submit" value="Submit"/>
+                <input type="submit" value="Submit"/> -->
+                <label for="class_name">
+                    Class:
+                </label>
+                <select name="class_name" id="class_name">
+                    {% for class_ in class_list %}
+                    <option value="{{ class_ }}">{{ class_ }}</option>
+                    {% endfor %}
+                </select>
+                <input type="submit" value="submit"/>
             </form>
             
             </div>
@@ -192,7 +201,7 @@
 
         {% if page_type=='find_activity_profile' %}
         <div class="container">
-            <p>Enter name of an activity to search for information about the Activity</p>
+            <p>Enter name of an activity to search for information about the activity</p>
 
             {% if error=='activity_not_found' %}
                 <p style="color: red;"> Activity not found! (No Activity record with provided Activity name has been found in our systems.)</p>
@@ -218,7 +227,7 @@
             <p>Activity info</p>
             <table border="1" style='border-collapse:collapse'>
                 <tr>
-                    <td>Activity Name</td>
+                    <td> Name</td>
                     <td>{{ activity_info["name"] }}</td>
                 </tr>
                 <tr>
@@ -227,6 +236,14 @@
                     </td>
                     <td>
                         {{ activity_info["category"] }}
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        Description
+                    </td>
+                    <td>
+                        {{ activity_info["description"] }}
                     </td>
                 </tr>
             </table>
