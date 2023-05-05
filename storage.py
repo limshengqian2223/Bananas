@@ -156,20 +156,7 @@ class StudentCollection(Collection):
         
         (done) Next step(0): Raise error when something unexpected occurs (perhaps wrong data type for age)
         Next step(1): Looks like data validation is necessary.
-        """        
-        error_msg = ""
-        if type(record['student_age'] != int):
-            error_msg += "age_wrong_type"
-            
-        if type(record['student_year_enrolled'] != int): 
-            error_msg += "year_enrolled_wrong_type"
-            
-        if type(record['student_grad_year'] != int):
-            error_msg += "grad_year_wrong_type"
-
-        if error_msg != "":
-            return False
-
+        """ 
         if self.find_by_name(record["student_name"]
                              ) is not None:  # Student name already exists
             return False
@@ -412,7 +399,7 @@ class ActivityCollection(Collection):
         result = self._execute_dql(find_by_name, (name, ))
         return result
 
-    def insert(self, record: dict) -> bool:
+    def insert(self, record: dict) -> [bool, str]:
         """
         Takes in dictionary containing activity's name, start date, end date, description, and category
 
@@ -435,12 +422,12 @@ class ActivityCollection(Collection):
 
         if self.find_by_name(record["activity_name"]
                              ) is not None:  # activity name already exists
-            return False
+            return False, "already_exist"
 
         cca_rec = self._ccac.find_by_name(record["cca_name"])
 
         if cca_rec is None:
-            return False
+            return False, "cca_not_exist"
 
         record["cca_id"] = cca_rec['id']
 
@@ -457,7 +444,7 @@ class ActivityCollection(Collection):
                 '''
 
         self._execute_dml(insert, record)
-        return True
+        return True, "all_clear"
 
     def update(self, activity_name, new_record) -> bool:
         """

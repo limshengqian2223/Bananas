@@ -77,9 +77,16 @@
         <p class="error">{{error}}</p>
         {% if empty_fields %}
             {% for empty_field in empty_fields %}
-        <p class='error'>{{empty_field.replace('_',' ').title()}} is empty!</p>
+        <p class='error'>{{ empty_field.replace('_',' ').title() }} is empty!</p>
             {% endfor %}
         {% endif %}
+
+        {% if wrong_fields %}
+            {% for wrong_field in wrong_fields %}
+        <p class='error'>{{ wrong_field.replace('_',' ').title() }} should be an integer!</p>
+            {% endfor %}
+        {% endif %}
+        
         
         {% for name, value in student_info.items() %}
         {{ name.replace('_', " ").title()}}:{{value}}
@@ -160,7 +167,7 @@
         <p class='error'>There are empty fields</p>
         {% if empty_fields %}
             {% for empty_field in empty_fields %}
-        <p class='error'>{{empty_field.replace('_',' ').title()}} is empty!</p>
+        <p class='error'>{{ empty_field.replace('_',' ').title() }} is empty!</p>
             {% endfor %}
         {% endif %}
         {% endif %}
@@ -238,13 +245,20 @@
     <div class='container'>
 
         {% if error == 'empty_fields' %}
-        <p class='error'>There are empty fields</p>
-        {% if empty_fields %}
-            {% for empty_field in empty_fields %}
-        <p class='error'>{{empty_field.replace('_',' ').title()}} is empty!</p>
-            {% endfor %}
+            <p class='error'>There are empty fields</p>
+            {% if empty_fields %}
+                {% for empty_field in empty_fields %}
+                    <p class='error'>{{empty_field.replace('_',' ').title()}} is empty!</p>
+                {% endfor %}
+            {% endif %}
         {% endif %}
+
+        {% if error == 'wrong_fields' %}
+                {% for wrong_field in wrong_fields %}
+                    <p class='error'>{{wrong_field.replace('_',' ').title()}} should be an integer!</p>
+                {% endfor %}
         {% endif %}
+        
 
         {% if error == "student_not_exist" %}
         <p class="error"> Student not found! (No student record with provided name has been found in our systems.)</p>

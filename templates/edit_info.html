@@ -15,14 +15,14 @@
                 <br/><br/>
                 <span class="instructions">Use the following form to edit a Student Record</span>
                 <br/><span class="error">{{error}}</span>
-                {% if error=='empty_fields' %}
-              <p class='error'>There are empty fields</p>
-                {% if empty_fields %}
-                    {% for empty_field in empty_fields %}
-                <p class='error'>{{empty_field.replace('_',' ').title()}} is empty!</p>
-                    {% endfor %}
-                {% endif %}
-                {% endif %}
+                <!-- {% if error=='empty_fields' %}
+                  <p class='error'>There are empty fields</p>
+                    {% if empty_fields %}
+                        {% for empty_field in empty_fields %}
+                    <p class='error'>{{empty_field.replace('_',' ').title()}} is empty!</p>
+                        {% endfor %}
+                    {% endif %}
+                {% endif %} -->
 
                 <br/><br/>
                 <form 
@@ -42,6 +42,17 @@
                 <br/><br/>
                 <span class="instructions">Use the following form to update a Student Record</span>
                 <br/><br/>
+                {% if error=="empty_records" %}
+                    {% for empty_field in empty_fields %}
+                        <p class="error">{{ empty_field.replace('_',' ').title() }} is empty!</p>
+                    {% endfor %}
+                {% endif %}
+
+                {% if error=="wrong_data_type" %}
+                    {% for wrong_field in wrong_fields %}
+                        <p class="error">{{ wrong_field.replace('_',' ').title() }} should be an integer!</p>
+                    {% endfor %}
+                {% endif %}
                 <form 
                     action="{{ form_meta['action'] }}"
                     method="{{ form_meta['method'] }}">
@@ -111,6 +122,7 @@
                 {% if error == "student_not_found" %}
                     <p class="error">Student does not exists! or Student has no CCA records to edit</p>
                 {% endif %}
+                
                 <span class="highlight-blue">Edit a Student CCA Record</span>
                 <br/><br/>
                 <span class="instructions">Use the following form to edit a Student Record</span>
@@ -157,6 +169,13 @@
                         No changes were made!
                     {% endif %}
                 </p>
+                {% if error=="empty_fields" %}
+                    {% for empty_field in empty_fields %}
+                        <p class="error">
+                            {{ empty_field.replace('_', ' ').title() }} is empty!
+                        </p>
+                    {% endfor %}
+                {% endif %}
                 <form 
                     action= "{{form_meta['action']}}"
                     method="{{form_meta['method']}}">
@@ -187,14 +206,6 @@
                             <label for="student_role">Student Role:</label>
                         </td>
         
-                        <!-- <td>
-                            <select name="student_role" id="student_role">
-                              <option value="Member">Member</option>
-                              <option value="Exco">Exco</option>
-                              <option value="President">President</option>
-                              <option value="Vice President">Vice President</option>
-                            </select>
-                        </td> -->
                         <td>
                             <input id="student_role" type="text" name="student_role" value="{{ form_data['student_role'] }}">
                         </td>
@@ -279,6 +290,21 @@
                         No changes were made!
                     {% endif %}
                 </p>
+                {% if error=="empty_fields" %}
+                    {% for empty_field in empty_fields %}
+                        <p class="error">
+                            {{ empty_field.replace("_", " ").title() }} is empty!
+                        </p>
+                    {% endfor %}
+                {% endif %}
+
+                {% if error=="wrong_fields" %}
+                    {% for wrong_field in wrong_fields %}
+                        <p class="error">
+                            {{ wrong_field.replace("_", " ").title() }} should be an integer!
+                        </p>
+                    {% endfor %}
+                {% endif %}
                 <form 
                     action= "{{form_meta['action']}}"
                     method="{{form_meta['method']}}">
